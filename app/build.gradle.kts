@@ -62,6 +62,10 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview:$composeVersion")
     implementation("androidx.compose.material3:material3:1.0.1")
     implementation("androidx.compose.material:material-icons-extended:1.3.1")
+    implementation("androidx.navigation:navigation-compose:2.5.3")
+    implementation("com.halilibo.compose-richtext:richtext-ui:0.16.0")
+    implementation("com.halilibo.compose-richtext:richtext-ui-material3:0.16.0")
+    implementation("com.halilibo.compose-richtext:richtext-commonmark:0.16.0")
     implementation("com.google.android.material:material:1.7.0")
 
     testImplementation("junit:junit:4.13.2")

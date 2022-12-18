@@ -12,9 +12,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.halilibo.richtext.ui.material3.SetupMaterial3RichText
 import io.github.tuguzt.mirea.todolist.R
 import io.github.tuguzt.mirea.todolist.domain.model.Task
 import io.github.tuguzt.mirea.todolist.domain.model.TaskDue
@@ -55,14 +55,6 @@ fun TaskCard(
                     maxLines = 1,
                     style = MaterialTheme.typography.titleLarge,
                 )
-                if (task.description.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = task.description,
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 2,
-                    )
-                }
                 task.due?.datetime?.let { datetime ->
                     Spacer(modifier = Modifier.height(8.dp))
                     AssistChip(
@@ -89,17 +81,18 @@ fun TaskCard(
 @Composable
 private fun ProjectCardPreview() {
     ToDoListTheme {
-        TaskCard(
-            task = Task(
-                id = "42",
-                name = "Hello World",
-                completed = true,
-                content = "Some task content",
-                description = "This is the example task for testing only",
-                due = TaskDue(string = "", datetime = Clock.System.now()),
-                createdAt = Clock.System.now(),
-            ),
-            modifier = Modifier.fillMaxWidth(),
-        )
+        SetupMaterial3RichText {
+            TaskCard(
+                task = Task(
+                    id = "42",
+                    name = "Hello `World`",
+                    completed = true,
+                    content = "Some task content",
+                    due = TaskDue(string = "", datetime = Clock.System.now()),
+                    createdAt = Clock.System.now(),
+                ),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
 }

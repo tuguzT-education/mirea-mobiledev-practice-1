@@ -61,7 +61,6 @@ private fun ProjectCardPreview() {
                         name = "Hello World",
                         completed = false,
                         content = "",
-                        description = "",
                         due = null,
                         createdAt = Clock.System.now()
                     ),
@@ -70,7 +69,6 @@ private fun ProjectCardPreview() {
                         name = "Some task",
                         completed = true,
                         content = "",
-                        description = "",
                         due = null,
                         createdAt = Clock.System.now()
                     ),
