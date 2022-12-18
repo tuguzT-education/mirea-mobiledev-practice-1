@@ -15,4 +15,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "ToDo List"
-include ':app'
+include(":app")
