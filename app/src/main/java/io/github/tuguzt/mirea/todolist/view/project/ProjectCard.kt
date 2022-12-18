@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import io.github.tuguzt.mirea.todolist.domain.model.Project
 import io.github.tuguzt.mirea.todolist.domain.model.Task
 import io.github.tuguzt.mirea.todolist.view.theme.ToDoListTheme
+import kotlinx.datetime.Clock
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,10 +53,27 @@ private fun ProjectCardPreview() {
     ToDoListTheme {
         ProjectCard(
             project = Project(
+                id = "42",
                 name = "New project",
                 tasks = listOf(
-                    Task(name = "Hello World", completed = false),
-                    Task(name = "Some task", completed = true),
+                    Task(
+                        id = "42",
+                        name = "Hello World",
+                        completed = false,
+                        content = "",
+                        description = "",
+                        due = null,
+                        createdAt = Clock.System.now()
+                    ),
+                    Task(
+                        id = "43",
+                        name = "Some task",
+                        completed = true,
+                        content = "",
+                        description = "",
+                        due = null,
+                        createdAt = Clock.System.now()
+                    ),
                 ),
             ),
             modifier = Modifier.fillMaxWidth(),
