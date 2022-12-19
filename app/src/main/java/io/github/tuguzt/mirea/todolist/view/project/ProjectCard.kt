@@ -41,7 +41,12 @@ fun ProjectCard(
                 val totalTasks = project.tasks.size
                 val completedTasks = project.tasks.count(Task::completed)
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(text = "$completedTasks from $totalTasks")
+                Text(
+                    text = buildString {
+                        if (totalTasks == completedTasks) append("✔ ")
+                        append("$completedTasks from $totalTasks")
+                    }
+                )
             }
         }
     }
