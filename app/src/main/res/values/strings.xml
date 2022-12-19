@@ -3,4 +3,7 @@
     <string name="task_due">Task due</string>
     <string name="home">Home</string>
     <string name="settings">Settings</string>
+    <string name="add_new_project">Add new project</string>
+    <string name="todo_projects">ToDo projects</string>
+    <string name="completed_projects">Completed projects</string>
 </resources>

@@ -1,6 +1,8 @@
 plugins {
     id("com.android.application")
     kotlin("android")
+    kotlin("kapt")
+    id("com.google.dagger.hilt.android")
 }
 
 val composeVersion = "1.3.2"
@@ -51,6 +53,11 @@ android {
     }
 }
 
+// Allow references to generated code
+kapt {
+    correctErrorTypes = true
+}
+
 dependencies {
     implementation(project(":domain"))
     implementation(project(":data"))
@@ -63,10 +70,13 @@ dependencies {
     implementation("androidx.compose.material3:material3:1.0.1")
     implementation("androidx.compose.material:material-icons-extended:1.3.1")
     implementation("androidx.navigation:navigation-compose:2.5.3")
+    implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
     implementation("com.halilibo.compose-richtext:richtext-ui:0.16.0")
     implementation("com.halilibo.compose-richtext:richtext-ui-material3:0.16.0")
     implementation("com.halilibo.compose-richtext:richtext-commonmark:0.16.0")
     implementation("com.google.android.material:material:1.7.0")
+    implementation("com.google.dagger:hilt-android:2.44")
+    kapt("com.google.dagger:hilt-android-compiler:2.44")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.4")
