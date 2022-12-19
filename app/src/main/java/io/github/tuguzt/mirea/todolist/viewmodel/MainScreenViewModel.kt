@@ -33,7 +33,7 @@ class MainScreenViewModel @Inject constructor() : ViewModel() {
                             createdAt = Clock.System.now(),
                         ),
                         Task(
-                            id = "42",
+                            id = "43",
                             name = "New task",
                             content = "## Some `markdown`",
                             completed = false,
@@ -55,7 +55,7 @@ class MainScreenViewModel @Inject constructor() : ViewModel() {
                             createdAt = Clock.System.now(),
                         ),
                         Task(
-                            id = "42",
+                            id = "43",
                             name = "New task",
                             content = "## Some `markdown`",
                             completed = true,

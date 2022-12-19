@@ -14,7 +14,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             ToDoListTheme {
                 SetupMaterial3RichText {
-                    MainScreen()
+                    EntryScreen()
                 }
             }
         }
