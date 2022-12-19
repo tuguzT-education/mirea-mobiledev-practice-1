@@ -27,43 +27,41 @@ import io.github.tuguzt.mirea.todolist.viewmodel.MainScreenViewModel
 fun MainScreen(viewModel: MainScreenViewModel = viewModel()) {
     val context = LocalContext.current
 
-    SetupMaterial3RichText {
-        Scaffold(
-            topBar = {
-                CenterAlignedTopAppBar(
-                    title = { Text(text = stringResource(R.string.app_name)) },
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text(text = stringResource(R.string.app_name)) },
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = {}) {
+                Icon(
+                    imageVector = Icons.Rounded.Add,
+                    contentDescription = stringResource(R.string.add_new_project),
                 )
-            },
-            floatingActionButton = {
-                FloatingActionButton(onClick = {}) {
-                    Icon(
-                        imageVector = Icons.Rounded.Add,
-                        contentDescription = stringResource(R.string.add_new_project),
-                    )
-                }
-            },
-        ) { padding ->
-            LazyColumn(
-                modifier = Modifier
-                    .padding(padding)
-                    .fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                val todoProjects = viewModel.todoProjects()
-                if (todoProjects.isNotEmpty()) {
-                    projectGroup(
-                        projects = todoProjects,
-                        header = context.getString(R.string.todo_projects),
-                    )
-                    item {}
-                }
-                val completedProjects = viewModel.completedProjects()
-                if (completedProjects.isNotEmpty()) {
-                    projectGroup(
-                        projects = completedProjects,
-                        header = context.getString(R.string.completed_projects),
-                    )
-                }
+            }
+        },
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            val todoProjects = viewModel.todoProjects()
+            if (todoProjects.isNotEmpty()) {
+                projectGroup(
+                    projects = todoProjects,
+                    header = context.getString(R.string.todo_projects),
+                )
+                item {}
+            }
+            val completedProjects = viewModel.completedProjects()
+            if (completedProjects.isNotEmpty()) {
+                projectGroup(
+                    projects = completedProjects,
+                    header = context.getString(R.string.completed_projects),
+                )
             }
         }
     }
@@ -95,7 +93,7 @@ private fun LazyListScope.projectGroup(projects: List<Project>, header: String) 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
-private fun ProjectGroupPreview() {
+private fun ProjectGroup() {
     ToDoListTheme {
         SetupMaterial3RichText {
             Scaffold { padding ->

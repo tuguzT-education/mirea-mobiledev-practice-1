@@ -9,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.halilibo.richtext.ui.material3.SetupMaterial3RichText
 import io.github.tuguzt.mirea.todolist.domain.model.Project
 import io.github.tuguzt.mirea.todolist.domain.model.Task
 import io.github.tuguzt.mirea.todolist.view.theme.ToDoListTheme
@@ -54,32 +55,34 @@ fun ProjectCard(
 
 @Preview
 @Composable
-private fun ProjectCardPreview() {
+private fun ProjectCard() {
     ToDoListTheme {
-        ProjectCard(
-            project = Project(
-                id = "42",
-                name = "New project",
-                tasks = listOf(
-                    Task(
-                        id = "42",
-                        name = "Hello World",
-                        completed = false,
-                        content = "",
-                        due = null,
-                        createdAt = Clock.System.now()
-                    ),
-                    Task(
-                        id = "43",
-                        name = "Some task",
-                        completed = true,
-                        content = "",
-                        due = null,
-                        createdAt = Clock.System.now()
+        SetupMaterial3RichText {
+            ProjectCard(
+                project = Project(
+                    id = "42",
+                    name = "New project",
+                    tasks = listOf(
+                        Task(
+                            id = "42",
+                            name = "Hello World",
+                            completed = false,
+                            content = "",
+                            due = null,
+                            createdAt = Clock.System.now()
+                        ),
+                        Task(
+                            id = "43",
+                            name = "Some task",
+                            completed = true,
+                            content = "",
+                            due = null,
+                            createdAt = Clock.System.now()
+                        ),
                     ),
                 ),
-            ),
-            modifier = Modifier.fillMaxWidth(),
-        )
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
 }

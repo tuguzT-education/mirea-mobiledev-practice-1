@@ -79,7 +79,7 @@ fun TaskCard(
 
 @Preview
 @Composable
-private fun ProjectCardPreview() {
+private fun TaskCard() {
     ToDoListTheme {
         SetupMaterial3RichText {
             TaskCard(

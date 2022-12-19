@@ -6,4 +6,6 @@
     <string name="add_new_project">Add new project</string>
     <string name="todo_projects">ToDo projects</string>
     <string name="completed_projects">Completed projects</string>
+    <string name="back">Back</string>
+    <string name="add_new_task">Add new task</string>
 </resources>
