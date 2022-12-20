@@ -5,9 +5,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.tuguzt.mirea.todolist.domain.model.Project
 import io.github.tuguzt.mirea.todolist.viewmodel.fakeProjects
+import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 
@@ -28,7 +30,9 @@ class AddNewProjectViewModel @Inject constructor() : ViewModel() {
             name = state.name,
             tasks = listOf(),
         )
-        fakeProjects = fakeProjects + newProject
+        viewModelScope.launch {
+            fakeProjects.emit(fakeProjects.value + newProject)
+        }
     }
 }
 

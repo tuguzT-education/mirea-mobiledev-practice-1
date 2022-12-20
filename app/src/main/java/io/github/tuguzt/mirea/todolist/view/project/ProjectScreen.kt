@@ -27,6 +27,8 @@ fun ProjectScreen(
     project: Project,
     onAddNewTask: () -> Unit = {},
     onTaskClick: (Task) -> Unit = {},
+    onTaskDueClick: (Task) -> Unit = {},
+    onTaskCheckboxClick: (Task) -> Unit = {},
     onNavigateUp: (() -> Unit)? = null,
 ) {
     Scaffold(
@@ -72,6 +74,8 @@ fun ProjectScreen(
                     task = task,
                     modifier = Modifier.fillMaxWidth(),
                     onClick = { onTaskClick(task) },
+                    onDueClick = { onTaskDueClick(task) },
+                    onCheckboxClick = { onTaskCheckboxClick(task) },
                 )
             }
         }

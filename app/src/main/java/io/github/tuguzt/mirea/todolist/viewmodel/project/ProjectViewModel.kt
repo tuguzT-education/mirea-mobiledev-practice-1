@@ -16,7 +16,7 @@ class ProjectViewModel @Inject constructor() : ViewModel() {
     val state get() = checkNotNull(_state)
 
     fun setup(projectId: String) {
-        val project = fakeProjects.find { project -> project.id == projectId }
+        val project = fakeProjects.value.find { project -> project.id == projectId }
             ?: error("Project with id $projectId not present")
         _state = ProjectScreenState(project)
     }

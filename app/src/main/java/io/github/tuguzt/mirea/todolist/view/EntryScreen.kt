@@ -50,6 +50,12 @@ fun EntryScreen(
                         val project = viewModel.state.project
                         navController.navigate(route = "project/${project.id}/task/${task.id}")
                     },
+                    onTaskDueClick = {
+                        // TODO change due of the task
+                    },
+                    onTaskCheckboxClick = {
+                        // TODO close or reopen task
+                    },
                     onNavigateUp = navController::navigateUp,
                 )
             }
@@ -61,7 +67,6 @@ fun EntryScreen(
                     addEnabled = viewModel.projectName.isNotEmpty(),
                     onAdd = {
                         viewModel.addNewProject()
-                        mainViewModel.refresh()
                         navController.navigateUp()
                     },
                 )

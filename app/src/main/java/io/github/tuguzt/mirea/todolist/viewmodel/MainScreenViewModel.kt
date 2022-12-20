@@ -5,18 +5,24 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.tuguzt.mirea.todolist.domain.model.Project
 import io.github.tuguzt.mirea.todolist.domain.model.Task
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class MainScreenViewModel @Inject constructor() : ViewModel() {
-    private var _state by mutableStateOf(MainScreenState(projects = fakeProjects))
+    private var _state by mutableStateOf(MainScreenState())
     val state get() = _state
 
-    fun refresh() {
-        _state = state.copy(projects = fakeProjects)
+    init {
+        viewModelScope.launch {
+            fakeProjects.collect { projects ->
+                _state = state.copy(projects = projects)
+            }
+        }
     }
 }
 
