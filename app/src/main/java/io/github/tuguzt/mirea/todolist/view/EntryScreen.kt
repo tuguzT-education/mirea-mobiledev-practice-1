@@ -8,56 +8,72 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
+import io.github.tuguzt.mirea.todolist.view.project.AddNewProjectScreen
 import io.github.tuguzt.mirea.todolist.view.project.ProjectScreen
 import io.github.tuguzt.mirea.todolist.view.task.TaskScreen
 import io.github.tuguzt.mirea.todolist.viewmodel.MainScreenViewModel
+import io.github.tuguzt.mirea.todolist.viewmodel.project.AddNewProjectViewModel
 import io.github.tuguzt.mirea.todolist.viewmodel.project.ProjectViewModel
 import io.github.tuguzt.mirea.todolist.viewmodel.task.TaskViewModel
 
 @Composable
 fun EntryScreen(
-    viewModel: MainScreenViewModel = viewModel(),
+    mainViewModel: MainScreenViewModel = viewModel(),
     navController: NavHostController = rememberNavController(),
 ) {
     Surface(color = MaterialTheme.colorScheme.background) {
         NavHost(navController = navController, startDestination = "main") {
             composable(route = "main") {
                 MainScreen(
-                    state = viewModel.state,
+                    state = mainViewModel.state,
                     onProjectClick = { project ->
                         navController.navigate(route = "project/${project.id}")
                     },
                     onAddNewProjectClick = {
-                        // TODO add new project
+                        navController.navigate(route = "addNewProject")
                     },
                 )
             }
             composable(route = "project/{id}") { backStackEntry ->
-                val projectViewModel: ProjectViewModel = hiltViewModel()
+                val viewModel: ProjectViewModel = hiltViewModel()
                 val projectId = checkNotNull(backStackEntry.arguments?.getString("id"))
-                projectViewModel.setup(projectId)
+                viewModel.setup(projectId)
 
                 ProjectScreen(
-                    project = projectViewModel.state.project,
+                    project = viewModel.state.project,
                     onAddNewTask = {
                         // TODO add new task
                     },
                     onTaskClick = { task ->
-                        val project = projectViewModel.state.project
+                        val project = viewModel.state.project
                         navController.navigate(route = "project/${project.id}/task/${task.id}")
                     },
                     onNavigateUp = navController::navigateUp,
                 )
             }
+            dialog(route = "addNewProject") {
+                val viewModel: AddNewProjectViewModel = hiltViewModel()
+                AddNewProjectScreen(
+                    projectName = viewModel.projectName,
+                    onProjectNameChange = viewModel::projectName::set,
+                    addEnabled = viewModel.projectName.isNotEmpty(),
+                    onAdd = {
+                        viewModel.addNewProject()
+                        mainViewModel.refresh()
+                        navController.navigateUp()
+                    },
+                )
+            }
             composable(route = "project/{projectId}/task/{taskId}") { backStackEntry ->
-                val taskViewModel: TaskViewModel = hiltViewModel()
+                val viewModel: TaskViewModel = hiltViewModel()
                 val projectId = checkNotNull(backStackEntry.arguments?.getString("projectId"))
                 val taskId = checkNotNull(backStackEntry.arguments?.getString("taskId"))
-                taskViewModel.setup(projectId, taskId)
+                viewModel.setup(projectId, taskId)
 
                 TaskScreen(
-                    task = taskViewModel.state.task,
+                    task = viewModel.state.task,
                     onTaskCompletion = {
                         // TODO close or reopen task
                     },

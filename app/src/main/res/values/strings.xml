@@ -12,4 +12,6 @@
     <string name="mark_completed">Mark as completed</string>
     <string name="completed">Completed</string>
     <string name="not_completed">Not completed</string>
+    <string name="project_name">Project name</string>
+    <string name="enter_new_project_name">Enter name of new project</string>
 </resources>

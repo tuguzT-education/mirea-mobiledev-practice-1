@@ -14,6 +14,10 @@ import javax.inject.Inject
 class MainScreenViewModel @Inject constructor() : ViewModel() {
     private var _state by mutableStateOf(MainScreenState(projects = fakeProjects))
     val state get() = _state
+
+    fun refresh() {
+        _state = state.copy(projects = fakeProjects)
+    }
 }
 
 @Immutable
