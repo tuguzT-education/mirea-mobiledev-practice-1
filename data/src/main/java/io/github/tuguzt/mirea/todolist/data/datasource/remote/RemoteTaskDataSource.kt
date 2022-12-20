@@ -1,6 +1,7 @@
 package io.github.tuguzt.mirea.todolist.data.datasource.remote
 
 import io.github.tuguzt.mirea.todolist.data.datasource.TaskDataSource
+import io.github.tuguzt.mirea.todolist.domain.DomainResult
 import io.github.tuguzt.mirea.todolist.domain.model.Project
 import io.github.tuguzt.mirea.todolist.domain.model.Task
 import io.github.tuguzt.mirea.todolist.domain.model.TaskDue
@@ -8,11 +9,11 @@ import io.github.tuguzt.mirea.todolist.domain.model.TaskDue
 public class RemoteTaskDataSource(apiClient: ApiClient) : TaskDataSource {
     private val taskApi = apiClient.taskApi
 
-    override suspend fun getAll(): List<Task> {
+    override suspend fun getAll(): DomainResult<List<Task>> {
         TODO("Not yet implemented")
     }
 
-    override suspend fun findById(id: String): Task? {
+    override suspend fun findById(id: String): DomainResult<Task?> {
         TODO("Not yet implemented")
     }
 
@@ -22,15 +23,15 @@ public class RemoteTaskDataSource(apiClient: ApiClient) : TaskDataSource {
         content: String,
         completed: Boolean,
         due: TaskDue?
-    ): Task {
+    ): DomainResult<Task> {
         TODO("Not yet implemented")
     }
 
-    override suspend fun update(task: Task): Task {
+    override suspend fun update(task: Task): DomainResult<Task> {
         TODO("Not yet implemented")
     }
 
-    override suspend fun delete(task: Task) {
+    override suspend fun delete(task: Task): DomainResult<Unit> {
         TODO("Not yet implemented")
     }
 }
