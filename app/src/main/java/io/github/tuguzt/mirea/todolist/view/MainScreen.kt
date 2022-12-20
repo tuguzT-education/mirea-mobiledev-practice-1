@@ -22,12 +22,14 @@ import io.github.tuguzt.mirea.todolist.R
 import io.github.tuguzt.mirea.todolist.domain.model.Project
 import io.github.tuguzt.mirea.todolist.view.project.ProjectCard
 import io.github.tuguzt.mirea.todolist.view.theme.ToDoListTheme
+import io.github.tuguzt.mirea.todolist.viewmodel.MainScreenState
+import io.github.tuguzt.mirea.todolist.viewmodel.completedProjects
+import io.github.tuguzt.mirea.todolist.viewmodel.todoProjects
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    todoProjects: List<Project>,
-    completedProjects: List<Project>,
+    state: MainScreenState,
     onProjectClick: (Project) -> Unit,
     onAddNewProjectClick: () -> Unit,
 ) {
@@ -47,8 +49,7 @@ fun MainScreen(
         },
     ) { padding ->
         ProjectList(
-            todoProjects = todoProjects,
-            completedProjects = completedProjects,
+            state = state,
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize(),
@@ -59,8 +60,7 @@ fun MainScreen(
 
 @Composable
 private fun ProjectList(
-    todoProjects: List<Project>,
-    completedProjects: List<Project>,
+    state: MainScreenState,
     modifier: Modifier = Modifier,
     onProjectClick: (Project) -> Unit,
 ) {
@@ -70,6 +70,7 @@ private fun ProjectList(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        val todoProjects = state.todoProjects
         if (todoProjects.isNotEmpty()) {
             projectGroup(
                 projects = todoProjects,
@@ -78,6 +79,7 @@ private fun ProjectList(
             )
             item {}
         }
+        val completedProjects = state.completedProjects
         if (completedProjects.isNotEmpty()) {
             projectGroup(
                 projects = completedProjects,

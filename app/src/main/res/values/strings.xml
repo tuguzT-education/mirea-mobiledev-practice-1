@@ -8,4 +8,8 @@
     <string name="completed_projects">Completed projects</string>
     <string name="back">Back</string>
     <string name="add_new_task">Add new task</string>
+    <string name="mark_not_completed">Mark as not completed</string>
+    <string name="mark_completed">Mark as completed</string>
+    <string name="completed">Completed</string>
+    <string name="not_completed">Not completed</string>
 </resources>

@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.halilibo.richtext.ui.material3.SetupMaterial3RichText
@@ -25,12 +26,19 @@ import kotlinx.datetime.Clock
 fun ProjectScreen(
     project: Project,
     onAddNewTask: () -> Unit = {},
+    onTaskClick: (Task) -> Unit = {},
     onNavigateUp: (() -> Unit)? = null,
 ) {
     Scaffold(
         topBar = {
-            MediumTopAppBar(
-                title = { Text(project.name, maxLines = 1) },
+            TopAppBar(
+                title = {
+                    Text(
+                        text = project.name,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
                 navigationIcon = {
                     onNavigateUp?.let { onNavigateUp ->
                         IconButton(onClick = onNavigateUp) {
@@ -60,7 +68,11 @@ fun ProjectScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             items(project.tasks, key = Task::id) { task ->
-                TaskCard(task, modifier = Modifier.fillMaxWidth())
+                TaskCard(
+                    task = task,
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { onTaskClick(task) },
+                )
             }
         }
     }
