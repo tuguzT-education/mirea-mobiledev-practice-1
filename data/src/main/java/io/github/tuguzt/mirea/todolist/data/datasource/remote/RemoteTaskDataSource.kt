@@ -14,8 +14,8 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 
-public class RemoteTaskDataSource(apiClient: ApiClient) : TaskDataSource {
-    private val taskApi = apiClient.taskApi
+public class RemoteTaskDataSource(client: ApiClient) : TaskDataSource {
+    private val taskApi = client.taskApi
 
     override suspend fun getAll(parent: Project): DomainResult<List<Task>> =
         taskApi.all(parent.id).toResult().map { tasks -> tasks.map(ApiTask::toDomain) }

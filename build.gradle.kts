@@ -8,5 +8,7 @@ plugins {
 }
 
 buildscript {
-    dependencies {}
+    dependencies {
+        classpath("io.objectbox:objectbox-gradle-plugin:3.5.0")
+    }
 }

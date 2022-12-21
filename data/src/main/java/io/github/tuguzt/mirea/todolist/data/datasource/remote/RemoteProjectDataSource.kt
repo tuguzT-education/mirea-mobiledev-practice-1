@@ -12,9 +12,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 
-public class RemoteProjectDataSource(apiClient: ApiClient) : ProjectDataSource {
-    private val projectApi = apiClient.projectApi
-    private val taskApi = apiClient.taskApi
+public class RemoteProjectDataSource(client: ApiClient) : ProjectDataSource {
+    private val projectApi = client.projectApi
+    private val taskApi = client.taskApi
 
     override suspend fun getAll(): DomainResult<List<Project>> =
         when (val projectsResult = projectApi.all().toResult()) {

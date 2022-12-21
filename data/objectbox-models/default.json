@@ -1,0 +1,131 @@
+{
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
+  "entities": [
+    {
+      "id": "1:4489796456679985659",
+      "lastPropertyId": "3:9143377847082167552",
+      "name": "ProjectEntity",
+      "properties": [
+        {
+          "id": "1:8304730232973183069",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:279669859413112949",
+          "name": "uid",
+          "indexId": "1:5672822676777695774",
+          "type": 9,
+          "flags": 2080
+        },
+        {
+          "id": "3:9143377847082167552",
+          "name": "name",
+          "type": 9
+        }
+      ],
+      "relations": [
+        {
+          "id": "1:8303107527022614014",
+          "name": "tasks",
+          "targetId": "3:3015882162212326107"
+        }
+      ]
+    },
+    {
+      "id": "2:1245665106060197045",
+      "lastPropertyId": "3:3158821591578668279",
+      "name": "TaskDueEntity",
+      "properties": [
+        {
+          "id": "1:8961618472431503445",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:3637878392528065876",
+          "name": "string",
+          "type": 9
+        },
+        {
+          "id": "3:3158821591578668279",
+          "name": "datetime",
+          "type": 6
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "3:3015882162212326107",
+      "lastPropertyId": "8:1665671924899448577",
+      "name": "TaskEntity",
+      "properties": [
+        {
+          "id": "1:8549617238818352851",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:5050362757395598274",
+          "name": "uid",
+          "indexId": "2:555577706493011045",
+          "type": 9,
+          "flags": 2080
+        },
+        {
+          "id": "3:7123726134262800134",
+          "name": "name",
+          "type": 9
+        },
+        {
+          "id": "4:7707184412794364405",
+          "name": "content",
+          "type": 9
+        },
+        {
+          "id": "5:7779020260370252537",
+          "name": "completed",
+          "type": 1
+        },
+        {
+          "id": "6:6506155853755033928",
+          "name": "createdAt",
+          "type": 6
+        },
+        {
+          "id": "7:521981539305543642",
+          "name": "projectId",
+          "indexId": "3:4746784889303299168",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "ProjectEntity"
+        },
+        {
+          "id": "8:1665671924899448577",
+          "name": "dueId",
+          "indexId": "4:2059189777708732868",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "TaskDueEntity"
+        }
+      ],
+      "relations": []
+    }
+  ],
+  "lastEntityId": "3:3015882162212326107",
+  "lastIndexId": "4:2059189777708732868",
+  "lastRelationId": "1:8303107527022614014",
+  "lastSequenceId": "0:0",
+  "modelVersion": 5,
+  "modelVersionParserMinimum": 5,
+  "retiredEntityUids": [],
+  "retiredIndexUids": [],
+  "retiredPropertyUids": [],
+  "retiredRelationUids": [],
+  "version": 1
+}
