@@ -14,4 +14,7 @@
     <string name="not_completed">Not completed</string>
     <string name="project_name">Project name</string>
     <string name="enter_new_project_name">Enter name of new project</string>
+    <string name="enter_new_task_data">Enter data of new task</string>
+    <string name="task_name">Task name</string>
+    <string name="task_content">Task content</string>
 </resources>

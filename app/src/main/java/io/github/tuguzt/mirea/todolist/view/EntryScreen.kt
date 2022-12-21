@@ -3,6 +3,8 @@ package io.github.tuguzt.mirea.todolist.view
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -12,12 +14,15 @@ import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import io.github.tuguzt.mirea.todolist.view.project.AddNewProjectScreen
 import io.github.tuguzt.mirea.todolist.view.project.ProjectScreen
+import io.github.tuguzt.mirea.todolist.view.task.AddNewTaskScreen
 import io.github.tuguzt.mirea.todolist.view.task.TaskScreen
 import io.github.tuguzt.mirea.todolist.viewmodel.MainScreenViewModel
 import io.github.tuguzt.mirea.todolist.viewmodel.project.AddNewProjectViewModel
 import io.github.tuguzt.mirea.todolist.viewmodel.project.ProjectViewModel
+import io.github.tuguzt.mirea.todolist.viewmodel.task.AddNewTaskViewModel
 import io.github.tuguzt.mirea.todolist.viewmodel.task.TaskViewModel
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun EntryScreen(
     mainViewModel: MainScreenViewModel = viewModel(),
@@ -44,7 +49,7 @@ fun EntryScreen(
                 ProjectScreen(
                     project = viewModel.state.project,
                     onAddNewTask = {
-                        // TODO add new task
+                        navController.navigate(route = "addNewTask")
                     },
                     onTaskClick = { task ->
                         val project = viewModel.state.project
@@ -64,7 +69,7 @@ fun EntryScreen(
                 AddNewProjectScreen(
                     projectName = viewModel.projectName,
                     onProjectNameChange = viewModel::projectName::set,
-                    addEnabled = viewModel.projectName.isNotEmpty(),
+                    addEnabled = viewModel.canAdd(),
                     onAdd = {
                         viewModel.addNewProject()
                         navController.navigateUp()
@@ -83,6 +88,23 @@ fun EntryScreen(
                         // TODO close or reopen task
                     },
                     onNavigateUp = navController::navigateUp,
+                )
+            }
+            dialog(
+                route = "addNewTask",
+                dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+            ) {
+                val viewModel: AddNewTaskViewModel = hiltViewModel()
+                AddNewTaskScreen(
+                    taskName = viewModel.taskName,
+                    onTaskNameChange = viewModel::taskName::set,
+                    taskContent = viewModel.taskContent,
+                    onTaskContentChange = viewModel::taskContent::set,
+                    addEnabled = viewModel.canAdd(),
+                    onAdd = {
+                        viewModel.addNewTask()
+                        navController.navigateUp()
+                    },
                 )
             }
         }

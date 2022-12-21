@@ -24,6 +24,8 @@ class AddNewProjectViewModel @Inject constructor() : ViewModel() {
             _state = state.copy(name = name)
         }
 
+    fun canAdd(): Boolean = projectName.isNotEmpty()
+
     fun addNewProject() {
         val newProject = Project(
             id = UUID.randomUUID().toString(),
