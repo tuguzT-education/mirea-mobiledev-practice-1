@@ -14,6 +14,7 @@ import io.objectbox.kotlin.query
 import io.objectbox.query.QueryBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 
 public class LocalTaskDataSource(client: DatabaseClient) : TaskDataSource {
@@ -22,7 +23,10 @@ public class LocalTaskDataSource(client: DatabaseClient) : TaskDataSource {
 
     override suspend fun getAll(parent: Project): DomainResult<List<Task>> =
         withContext(Dispatchers.IO) {
-            success(taskBox.all.map(TaskEntity::toDomain))
+            val data = taskBox.all
+                .filter { task -> parent.tasks.find { it.id == task.uid } != null }
+                .map(TaskEntity::toDomain)
+            success(data)
         }
 
     override suspend fun findById(id: String): DomainResult<Task?> =
@@ -39,9 +43,32 @@ public class LocalTaskDataSource(client: DatabaseClient) : TaskDataSource {
         parent: Project,
         name: String,
         content: String,
-    ): DomainResult<Task> {
-        TODO("Not yet implemented")
-    }
+    ): DomainResult<Task> =
+        withContext(Dispatchers.IO) {
+            val projectQuery = projectBox.query {
+                val stringOrder = QueryBuilder.StringOrder.CASE_SENSITIVE
+                equal(ProjectEntity_.uid, parent.id, stringOrder)
+            }
+            val project = projectQuery.findUnique() ?: kotlin.run {
+                val error = DomainError.StorageError(
+                    message = "Project was not found by id ${parent.id}",
+                    cause = null,
+                )
+                return@withContext error(error)
+            }
+            var entity = TaskEntity(
+                name = name,
+                content = content,
+                createdAt = Clock.System.now().toEpochMilliseconds(),
+            )
+            entity.project.target = project
+            val id = taskBox.put(entity)
+
+            entity = taskBox[id]
+            entity.uid = id.toString()
+            taskBox.put(entity)
+            success(entity.toDomain())
+        }
 
     public suspend fun save(projectId: String, task: Task): DomainResult<Task> =
         withContext(Dispatchers.IO) {

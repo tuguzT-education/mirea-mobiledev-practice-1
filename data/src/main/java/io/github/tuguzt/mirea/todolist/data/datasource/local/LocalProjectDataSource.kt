@@ -33,9 +33,16 @@ public class LocalProjectDataSource(client: DatabaseClient) : ProjectDataSource 
             success(entity?.toDomain())
         }
 
-    override suspend fun create(name: String): DomainResult<Project> {
-        TODO("Not yet implemented")
-    }
+    override suspend fun create(name: String): DomainResult<Project> =
+        withContext(Dispatchers.IO) {
+            var entity = ProjectEntity(name = name)
+            val id = projectBox.put(entity)
+
+            entity = projectBox[id]
+            entity.uid = id.toString()
+            projectBox.put(entity)
+            success(entity.toDomain())
+        }
 
     public suspend fun save(project: Project): DomainResult<Project> =
         withContext(Dispatchers.IO) {

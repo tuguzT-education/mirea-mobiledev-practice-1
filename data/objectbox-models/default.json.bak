@@ -27,7 +27,13 @@
           "type": 9
         }
       ],
-      "relations": []
+      "relations": [
+        {
+          "id": "1:8303107527022614014",
+          "name": "tasks",
+          "targetId": "3:3015882162212326107"
+        }
+      ]
     },
     {
       "id": "2:1245665106060197045",
@@ -120,8 +126,6 @@
   "retiredEntityUids": [],
   "retiredIndexUids": [],
   "retiredPropertyUids": [],
-  "retiredRelationUids": [
-    8303107527022614014
-  ],
+  "retiredRelationUids": [],
   "version": 1
 }

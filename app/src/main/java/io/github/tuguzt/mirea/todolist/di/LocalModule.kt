@@ -9,11 +9,13 @@ import dagger.hilt.components.SingletonComponent
 import io.github.tuguzt.mirea.todolist.data.datasource.local.DatabaseClient
 import io.github.tuguzt.mirea.todolist.data.datasource.local.LocalProjectDataSource
 import io.github.tuguzt.mirea.todolist.data.datasource.local.LocalTaskDataSource
+import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object LocalModule {
     @Provides
+    @Singleton
     fun provideClient(@ApplicationContext context: Context): DatabaseClient =
         DatabaseClient(context)
 

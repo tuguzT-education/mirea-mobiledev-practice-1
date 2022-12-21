@@ -1,5 +1,6 @@
 package io.github.tuguzt.mirea.todolist.data.datasource.local.model
 
+import io.objectbox.annotation.Backlink
 import io.objectbox.annotation.Entity
 import io.objectbox.annotation.Id
 import io.objectbox.annotation.Unique
@@ -11,5 +12,6 @@ internal data class ProjectEntity(
     @Unique var uid: String? = null,
     var name: String? = null,
 ) {
+    @Backlink(to = "project")
     lateinit var tasks: ToMany<TaskEntity>
 }
