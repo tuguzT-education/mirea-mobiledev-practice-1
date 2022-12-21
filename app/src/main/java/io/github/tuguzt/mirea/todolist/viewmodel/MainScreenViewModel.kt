@@ -7,20 +7,31 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.tuguzt.mirea.todolist.domain.Result
 import io.github.tuguzt.mirea.todolist.domain.model.Project
 import io.github.tuguzt.mirea.todolist.domain.model.Task
+import io.github.tuguzt.mirea.todolist.domain.usecase.AllProjects
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class MainScreenViewModel @Inject constructor() : ViewModel() {
+class MainScreenViewModel @Inject constructor(
+    private val allProjects: AllProjects,
+) : ViewModel() {
     private var _state by mutableStateOf(MainScreenState())
     val state get() = _state
 
     init {
+        update()
+    }
+
+    fun update() {
         viewModelScope.launch {
-            fakeProjects.collect { projects ->
-                _state = state.copy(projects = projects)
+            when (val result = allProjects.allProjects()) {
+                is Result.Error -> throw result.error
+                is Result.Success -> {
+                    _state = state.copy(projects = result.data)
+                }
             }
         }
     }

@@ -3,7 +3,7 @@ package io.github.tuguzt.mirea.todolist.di
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.components.ActivityComponent
+import dagger.hilt.components.SingletonComponent
 import io.github.tuguzt.mirea.todolist.data.datasource.ProjectDataSource
 import io.github.tuguzt.mirea.todolist.data.datasource.TaskDataSource
 import io.github.tuguzt.mirea.todolist.data.interactor.*
@@ -12,7 +12,7 @@ import io.github.tuguzt.mirea.todolist.data.repository.TaskRepository
 import io.github.tuguzt.mirea.todolist.domain.usecase.*
 
 @Module
-@InstallIn(ActivityComponent::class)
+@InstallIn(SingletonComponent::class)
 object AppModule {
     @Provides
     fun provideProjectRepository(dataSource: ProjectDataSource): ProjectRepository =

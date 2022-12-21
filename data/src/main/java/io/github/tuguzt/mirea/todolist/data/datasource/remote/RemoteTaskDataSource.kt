@@ -13,6 +13,8 @@ import io.github.tuguzt.mirea.todolist.domain.model.Project
 import io.github.tuguzt.mirea.todolist.domain.model.Task
 import io.github.tuguzt.mirea.todolist.domain.model.TaskDue
 import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
 
 public class RemoteTaskDataSource(apiClient: ApiClient) : TaskDataSource {
     private val taskApi = apiClient.taskApi
@@ -74,7 +76,11 @@ internal fun ApiTask.toDomain(): Task = Task(
     due = due?.let { due ->
         TaskDue(
             string = due.string,
-            datetime = Instant.parse(due.datetime),
+            datetime = if (due.datetime != null) {
+                Instant.parse(due.datetime)
+            } else {
+                due.date.atStartOfDayIn(TimeZone.currentSystemDefault())
+            },
         )
     },
     createdAt = Instant.parse(createdAt),

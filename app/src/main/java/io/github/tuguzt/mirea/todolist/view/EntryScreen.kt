@@ -46,23 +46,24 @@ fun EntryScreen(
                 val projectId = checkNotNull(backStackEntry.arguments?.getString("id"))
                 viewModel.setup(projectId)
 
-                ProjectScreen(
-                    project = viewModel.state.project,
-                    onAddNewTask = {
-                        navController.navigate(route = "addNewTask")
-                    },
-                    onTaskClick = { task ->
-                        val project = viewModel.state.project
-                        navController.navigate(route = "project/${project.id}/task/${task.id}")
-                    },
-                    onTaskDueClick = {
-                        // TODO change due of the task
-                    },
-                    onTaskCheckboxClick = {
-                        // TODO close or reopen task
-                    },
-                    onNavigateUp = navController::navigateUp,
-                )
+                if (!viewModel.state.loading) {
+                    ProjectScreen(
+                        project = checkNotNull(viewModel.state.project),
+                        onAddNewTask = {
+                            navController.navigate(route = "project/$projectId/addNewTask")
+                        },
+                        onTaskClick = { task ->
+                            navController.navigate(route = "task/${task.id}")
+                        },
+                        onTaskDueClick = {
+                            // TODO change due of the task
+                        },
+                        onTaskCheckboxClick = {
+                            // TODO close or reopen task
+                        },
+                        onNavigateUp = navController::navigateUp,
+                    )
+                }
             }
             dialog(route = "addNewProject") {
                 val viewModel: AddNewProjectViewModel = hiltViewModel()
@@ -72,29 +73,34 @@ fun EntryScreen(
                     addEnabled = viewModel.canAdd(),
                     onAdd = {
                         viewModel.addNewProject()
+                        mainViewModel.update()
                         navController.navigateUp()
                     },
                 )
             }
-            composable(route = "project/{projectId}/task/{taskId}") { backStackEntry ->
+            composable(route = "task/{taskId}") { backStackEntry ->
                 val viewModel: TaskViewModel = hiltViewModel()
-                val projectId = checkNotNull(backStackEntry.arguments?.getString("projectId"))
                 val taskId = checkNotNull(backStackEntry.arguments?.getString("taskId"))
-                viewModel.setup(projectId, taskId)
+                viewModel.setup(taskId)
 
-                TaskScreen(
-                    task = viewModel.state.task,
-                    onTaskCompletion = {
-                        // TODO close or reopen task
-                    },
-                    onNavigateUp = navController::navigateUp,
-                )
+                if (!viewModel.state.loading) {
+                    TaskScreen(
+                        task = checkNotNull(viewModel.state.task),
+                        onTaskCompletion = {
+                            // TODO close or reopen task
+                        },
+                        onNavigateUp = navController::navigateUp,
+                    )
+                }
             }
             dialog(
-                route = "addNewTask",
+                route = "project/{id}/addNewTask",
                 dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
-            ) {
+            ) { backStackEntry ->
                 val viewModel: AddNewTaskViewModel = hiltViewModel()
+                val projectId = checkNotNull(backStackEntry.arguments?.getString("id"))
+                viewModel.setup(projectId)
+
                 AddNewTaskScreen(
                     taskName = viewModel.taskName,
                     onTaskNameChange = viewModel::taskName::set,

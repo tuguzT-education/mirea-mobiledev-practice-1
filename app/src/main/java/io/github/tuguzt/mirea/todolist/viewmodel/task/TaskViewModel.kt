@@ -5,28 +5,36 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.tuguzt.mirea.todolist.domain.model.Project
+import io.github.tuguzt.mirea.todolist.domain.Result
 import io.github.tuguzt.mirea.todolist.domain.model.Task
-import io.github.tuguzt.mirea.todolist.viewmodel.fakeProjects
+import io.github.tuguzt.mirea.todolist.domain.usecase.TaskById
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class TaskViewModel @Inject constructor() : ViewModel() {
-    private var _state: TaskScreenState? by mutableStateOf(null)
-    val state get() = checkNotNull(_state)
+class TaskViewModel @Inject constructor(
+    private val taskById: TaskById,
+) : ViewModel() {
+    private var _state by mutableStateOf(TaskScreenState())
+    val state get() = _state
 
-    fun setup(projectId: String, taskId: String) {
-        val project = fakeProjects.value.find { project -> project.id == projectId }
-            ?: error("Project with id $projectId not present")
-        val task = project.tasks.find { task -> task.id == taskId }
-            ?: error("Task with id $taskId not present")
-        _state = TaskScreenState(project, task)
+    fun setup(taskId: String) {
+        viewModelScope.launch {
+            when (val result = taskById.taskById(taskId)) {
+                is Result.Error -> throw result.error
+                is Result.Success -> {
+                    val task = checkNotNull(result.data)
+                    _state = state.copy(task = task, loading = false)
+                }
+            }
+        }
     }
 }
 
 @Immutable
 data class TaskScreenState(
-    val parent: Project,
-    val task: Task,
+    val task: Task? = null,
+    val loading: Boolean = true,
 )

@@ -7,14 +7,15 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.tuguzt.mirea.todolist.domain.model.Project
-import io.github.tuguzt.mirea.todolist.viewmodel.fakeProjects
+import io.github.tuguzt.mirea.todolist.domain.Result
+import io.github.tuguzt.mirea.todolist.domain.usecase.CreateProject
 import kotlinx.coroutines.launch
-import java.util.*
 import javax.inject.Inject
 
 @HiltViewModel
-class AddNewProjectViewModel @Inject constructor() : ViewModel() {
+class AddNewProjectViewModel @Inject constructor(
+    private val createProject: CreateProject,
+) : ViewModel() {
     private var _state by mutableStateOf(AddNewProjectScreenState())
     val state get() = _state
 
@@ -27,13 +28,11 @@ class AddNewProjectViewModel @Inject constructor() : ViewModel() {
     fun canAdd(): Boolean = projectName.isNotEmpty()
 
     fun addNewProject() {
-        val newProject = Project(
-            id = UUID.randomUUID().toString(),
-            name = state.name,
-            tasks = listOf(),
-        )
         viewModelScope.launch {
-            fakeProjects.emit(fakeProjects.value + newProject)
+            when (val result = createProject.createProject(state.name)) {
+                is Result.Error -> throw result.error
+                is Result.Success -> Unit
+            }
         }
     }
 }
