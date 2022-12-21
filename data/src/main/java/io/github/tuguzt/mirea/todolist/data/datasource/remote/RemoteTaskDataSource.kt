@@ -12,6 +12,7 @@ import io.github.tuguzt.mirea.todolist.domain.map
 import io.github.tuguzt.mirea.todolist.domain.model.Project
 import io.github.tuguzt.mirea.todolist.domain.model.Task
 import io.github.tuguzt.mirea.todolist.domain.model.TaskDue
+import io.github.tuguzt.mirea.todolist.domain.model.UpdateTask
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
@@ -38,34 +39,37 @@ public class RemoteTaskDataSource(apiClient: ApiClient) : TaskDataSource {
         return taskApi.create(create).toResult().map(ApiTask::toDomain)
     }
 
-    override suspend fun update(task: Task): DomainResult<Task> {
-        if (task.completed) {
-            when (val result = taskApi.close(task.id).toResult()) {
-                is Result.Error -> return result.cast()
-                is Result.Success -> Unit
-            }
-        } else {
-            when (val result = taskApi.reopen(task.id).toResult()) {
-                is Result.Error -> return result.cast()
-                is Result.Success -> Unit
+    override suspend fun update(id: String, update: UpdateTask): DomainResult<Task> {
+        val completed = update.completed
+        if (completed != null) {
+            if (completed) {
+                when (val result = taskApi.close(id).toResult()) {
+                    is Result.Error -> return result.cast()
+                    is Result.Success -> Unit
+                }
+            } else {
+                when (val result = taskApi.reopen(id).toResult()) {
+                    is Result.Error -> return result.cast()
+                    is Result.Success -> Unit
+                }
             }
         }
-        val update = ApiUpdateTask(
-            content = task.name,
-            description = task.content,
+        val apiUpdate = ApiUpdateTask(
+            content = update.name,
+            description = update.content,
             labels = null,
             priority = null,
-            dueString = task.due?.string,
+            dueString = update.due?.string,
             dueDate = null,
-            dueDatetime = task.due?.datetime?.toString(),
+            dueDatetime = update.due?.datetime?.toString(),
             dueLang = null,
             assigneeId = null,
         )
-        return taskApi.update(task.id, update).toResult().map(ApiTask::toDomain)
+        return taskApi.update(id, apiUpdate).toResult().map(ApiTask::toDomain)
     }
 
-    override suspend fun delete(task: Task): DomainResult<Unit> =
-        taskApi.delete(task.id).toResult()
+    override suspend fun delete(id: String): DomainResult<Unit> =
+        taskApi.delete(id).toResult()
 }
 
 internal fun ApiTask.toDomain(): Task = Task(

@@ -7,6 +7,7 @@ import io.github.tuguzt.mirea.todolist.data.datasource.remote.model.ApiTask
 import io.github.tuguzt.mirea.todolist.data.datasource.remote.model.toResult
 import io.github.tuguzt.mirea.todolist.domain.*
 import io.github.tuguzt.mirea.todolist.domain.model.Project
+import io.github.tuguzt.mirea.todolist.domain.model.UpdateProject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -48,12 +49,12 @@ public class RemoteProjectDataSource(apiClient: ApiClient) : ProjectDataSource {
             }
         }
 
-    override suspend fun update(project: Project): DomainResult<Project> {
+    override suspend fun update(id: String, update: UpdateProject): DomainResult<Project> {
         TODO("Not yet implemented")
     }
 
-    override suspend fun delete(project: Project): DomainResult<Unit> =
-        projectApi.delete(project.id).toResult()
+    override suspend fun delete(id: String): DomainResult<Unit> =
+        projectApi.delete(id).toResult()
 
     private suspend fun ApiProject.toDomain(): DomainResult<Project> {
         val tasks = taskApi.all(id).toResult().map { tasks ->

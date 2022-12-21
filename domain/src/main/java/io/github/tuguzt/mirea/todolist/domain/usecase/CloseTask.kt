@@ -4,5 +4,5 @@ import io.github.tuguzt.mirea.todolist.domain.DomainResult
 import io.github.tuguzt.mirea.todolist.domain.model.Task
 
 public interface CloseTask {
-    public suspend fun closeTask(task: Task): DomainResult<Unit>
+    public suspend fun closeTask(id: String): DomainResult<Unit>
 }

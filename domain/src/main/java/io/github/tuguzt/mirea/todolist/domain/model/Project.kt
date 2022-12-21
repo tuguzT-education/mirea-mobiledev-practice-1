@@ -5,3 +5,5 @@ public data class Project(
     val name: String,
     val tasks: List<Task>,
 )
+
+public data class UpdateProject(val name: String)
