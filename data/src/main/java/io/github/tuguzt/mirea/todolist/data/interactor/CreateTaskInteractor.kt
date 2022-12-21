@@ -10,6 +10,6 @@ public class CreateTaskInteractor(private val repository: TaskRepository) : Crea
     override suspend fun createTask(
         parent: Project,
         name: String,
-        content: String
-    ): DomainResult<Task> = repository.create(parent, name, content, completed = false, due = null)
+        content: String,
+    ): DomainResult<Task> = repository.create(parent, name, content)
 }

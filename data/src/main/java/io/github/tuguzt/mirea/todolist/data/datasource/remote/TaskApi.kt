@@ -11,7 +11,7 @@ internal interface TaskApi {
     suspend fun find(@Path("id") id: String): ApiResponse<ApiTask>
 
     @POST("tasks")
-    suspend fun create(@Body update: ApiCreateTask): ApiResponse<ApiTask>
+    suspend fun create(@Body create: ApiCreateTask): ApiResponse<ApiTask>
 
     @POST("tasks/{id}")
     suspend fun update(@Path("id") id: String, @Body update: ApiUpdateTask): ApiResponse<ApiTask>

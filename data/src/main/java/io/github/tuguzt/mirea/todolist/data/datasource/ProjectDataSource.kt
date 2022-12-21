@@ -9,7 +9,7 @@ public interface ProjectDataSource {
 
     public suspend fun findById(id: String): DomainResult<Project?>
 
-    public suspend fun create(name: String, tasks: List<Task>): DomainResult<Project>
+    public suspend fun create(name: String): DomainResult<Project>
 
     public suspend fun update(project: Project): DomainResult<Project>
 

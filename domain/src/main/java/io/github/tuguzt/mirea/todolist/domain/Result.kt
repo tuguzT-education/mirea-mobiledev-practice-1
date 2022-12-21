@@ -27,7 +27,7 @@ public fun <T, E : Throwable, N> Result<T, E>.map(transform: (T) -> N): Result<N
         callsInPlace(transform, InvocationKind.AT_MOST_ONCE)
     }
     return when (this) {
-        is Result.Error -> Result.Error(error)
+        is Result.Error -> cast()
         is Result.Success -> map(transform)
     }
 }
@@ -39,7 +39,7 @@ public fun <T, E : Throwable, N : Throwable> Result<T, E>.mapError(transform: (E
     }
     return when (this) {
         is Result.Error -> map(transform)
-        is Result.Success -> Result.Success(data)
+        is Result.Success -> cast()
     }
 }
 
@@ -58,3 +58,9 @@ public fun <T, E : Throwable, N : Throwable> Result.Error<T, E>.map(transform: (
     }
     return Result.Error(transform(error))
 }
+
+public fun <S, E : Throwable, N : Throwable> Result.Success<S, E>.cast(): Result.Success<S, N> =
+    success(data)
+
+public fun <S, E : Throwable, N> Result.Error<S, E>.cast(): Result.Error<N, E> =
+    error(error)

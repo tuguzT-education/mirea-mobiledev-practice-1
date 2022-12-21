@@ -12,8 +12,8 @@ public class ProjectRepository(private val dataSource: ProjectDataSource) {
     public suspend fun findById(id: String): DomainResult<Project?> =
         dataSource.findById(id)
 
-    public suspend fun create(name: String, tasks: List<Task>): DomainResult<Project> =
-        dataSource.create(name, tasks)
+    public suspend fun create(name: String): DomainResult<Project> =
+        dataSource.create(name)
 
     public suspend fun update(project: Project): DomainResult<Project> =
         dataSource.update(project)

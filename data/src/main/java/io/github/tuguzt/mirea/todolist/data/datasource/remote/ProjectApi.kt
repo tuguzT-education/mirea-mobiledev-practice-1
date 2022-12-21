@@ -11,7 +11,7 @@ internal interface ProjectApi {
     suspend fun find(@Path("id") id: String): ApiResponse<ApiProject>
 
     @POST("projects")
-    suspend fun create(@Body update: ApiCreateProject): ApiResponse<ApiProject>
+    suspend fun create(@Body create: ApiCreateProject): ApiResponse<ApiProject>
 
     @POST("projects/{id}")
     suspend fun update(
