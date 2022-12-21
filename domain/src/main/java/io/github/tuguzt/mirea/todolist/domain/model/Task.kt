@@ -23,7 +23,17 @@ public data class UpdateTask(
     val due: UpdateTaskDue? = null,
 )
 
+public fun UpdateTask.isEmpty(): Boolean =
+    name == null && content == null && completed == null && due == null
+
+public fun UpdateTask.isNotEmpty(): Boolean = !isEmpty()
+
 public data class UpdateTaskDue(
     val string: String? = null,
     val datetime: Instant? = null,
 )
+
+public fun UpdateTaskDue.isEmpty(): Boolean =
+    string == null && datetime == null
+
+public fun UpdateTaskDue.isNotEmpty(): Boolean = !isEmpty()

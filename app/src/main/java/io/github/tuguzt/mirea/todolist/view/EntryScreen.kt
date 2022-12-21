@@ -58,9 +58,7 @@ fun EntryScreen(
                         onTaskDueClick = {
                             // TODO change due of the task
                         },
-                        onTaskCheckboxClick = {
-                            // TODO close or reopen task
-                        },
+                        onTaskCheckboxClick = viewModel::changeTaskCompletion,
                         onNavigateUp = navController::navigateUp,
                     )
                 }
@@ -86,9 +84,7 @@ fun EntryScreen(
                 if (!viewModel.state.loading) {
                     TaskScreen(
                         task = checkNotNull(viewModel.state.task),
-                        onTaskCompletion = {
-                            // TODO close or reopen task
-                        },
+                        onTaskCompletion = viewModel::changeTaskCompletion,
                         onNavigateUp = navController::navigateUp,
                     )
                 }
