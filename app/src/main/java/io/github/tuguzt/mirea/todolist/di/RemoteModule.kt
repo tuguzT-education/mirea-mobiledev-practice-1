@@ -4,8 +4,6 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import io.github.tuguzt.mirea.todolist.data.datasource.ProjectDataSource
-import io.github.tuguzt.mirea.todolist.data.datasource.TaskDataSource
 import io.github.tuguzt.mirea.todolist.data.datasource.remote.ApiClient
 import io.github.tuguzt.mirea.todolist.data.datasource.remote.RemoteProjectDataSource
 import io.github.tuguzt.mirea.todolist.data.datasource.remote.RemoteTaskDataSource
@@ -14,13 +12,13 @@ import io.github.tuguzt.mirea.todolist.data.datasource.remote.RemoteTaskDataSour
 @InstallIn(SingletonComponent::class)
 object RemoteModule {
     @Provides
-    fun provideApiClient(): ApiClient = ApiClient()
+    fun provideClient(): ApiClient = ApiClient()
 
     @Provides
-    fun provideProjectDataSource(apiClient: ApiClient): ProjectDataSource =
+    fun provideProjectDataSource(apiClient: ApiClient): RemoteProjectDataSource =
         RemoteProjectDataSource(apiClient)
 
     @Provides
-    fun provideTaskDataSource(apiClient: ApiClient): TaskDataSource =
+    fun provideTaskDataSource(apiClient: ApiClient): RemoteTaskDataSource =
         RemoteTaskDataSource(apiClient)
 }

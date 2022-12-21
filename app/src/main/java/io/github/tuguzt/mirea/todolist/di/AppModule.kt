@@ -4,8 +4,6 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import io.github.tuguzt.mirea.todolist.data.datasource.ProjectDataSource
-import io.github.tuguzt.mirea.todolist.data.datasource.TaskDataSource
 import io.github.tuguzt.mirea.todolist.data.interactor.*
 import io.github.tuguzt.mirea.todolist.data.repository.ProjectRepository
 import io.github.tuguzt.mirea.todolist.data.repository.TaskRepository
@@ -14,14 +12,6 @@ import io.github.tuguzt.mirea.todolist.domain.usecase.*
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
-    @Provides
-    fun provideProjectRepository(dataSource: ProjectDataSource): ProjectRepository =
-        ProjectRepository(dataSource)
-
-    @Provides
-    fun provideTaskRepository(dataSource: TaskDataSource): TaskRepository =
-        TaskRepository(dataSource)
-
     @Provides
     fun provideAllProjects(repository: ProjectRepository): AllProjects =
         AllProjectsInteractor(repository)
