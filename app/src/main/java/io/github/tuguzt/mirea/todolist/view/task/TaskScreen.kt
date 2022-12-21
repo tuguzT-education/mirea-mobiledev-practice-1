@@ -4,6 +4,7 @@ import android.text.format.DateFormat
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DoneAll
 import androidx.compose.material.icons.rounded.RemoveDone
 import androidx.compose.material3.*
@@ -29,6 +30,7 @@ import kotlin.time.Duration.Companion.days
 fun TaskScreen(
     task: Task,
     onTaskCompletion: () -> Unit = {},
+    onDeleteTask: () -> Unit = {},
     onNavigateUp: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
@@ -67,6 +69,12 @@ fun TaskScreen(
                                     contentDescription = stringResource(R.string.mark_completed),
                                 )
                             }
+                        }
+                        IconButton(onClick = onDeleteTask) {
+                            Icon(
+                                imageVector = Icons.Rounded.Delete,
+                                contentDescription = stringResource(R.string.delete_task),
+                            )
                         }
                     },
                 )

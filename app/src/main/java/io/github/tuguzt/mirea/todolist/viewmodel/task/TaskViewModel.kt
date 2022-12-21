@@ -10,6 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.tuguzt.mirea.todolist.domain.Result
 import io.github.tuguzt.mirea.todolist.domain.model.Task
 import io.github.tuguzt.mirea.todolist.domain.usecase.CloseTask
+import io.github.tuguzt.mirea.todolist.domain.usecase.DeleteTask
 import io.github.tuguzt.mirea.todolist.domain.usecase.ReopenTask
 import io.github.tuguzt.mirea.todolist.domain.usecase.TaskById
 import kotlinx.coroutines.launch
@@ -20,6 +21,7 @@ class TaskViewModel @Inject constructor(
     private val taskById: TaskById,
     private val closeTask: CloseTask,
     private val reopenTask: ReopenTask,
+    private val deleteTask: DeleteTask,
 ) : ViewModel() {
     private var _state by mutableStateOf(TaskScreenState())
     val state get() = _state
@@ -42,6 +44,17 @@ class TaskViewModel @Inject constructor(
             reopenTask()
         } else {
             closeTask()
+        }
+    }
+
+    fun deleteTask() {
+        _state = state.copy(loading = true)
+        viewModelScope.launch {
+            val task = checkNotNull(state.task)
+            when (val result = deleteTask.deleteTask(task.id)) {
+                is Result.Error -> throw result.error
+                is Result.Success -> Unit
+            }
         }
     }
 

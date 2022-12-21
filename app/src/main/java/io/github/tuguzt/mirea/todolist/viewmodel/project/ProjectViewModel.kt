@@ -11,6 +11,7 @@ import io.github.tuguzt.mirea.todolist.domain.Result
 import io.github.tuguzt.mirea.todolist.domain.model.Project
 import io.github.tuguzt.mirea.todolist.domain.model.Task
 import io.github.tuguzt.mirea.todolist.domain.usecase.CloseTask
+import io.github.tuguzt.mirea.todolist.domain.usecase.DeleteProject
 import io.github.tuguzt.mirea.todolist.domain.usecase.ProjectById
 import io.github.tuguzt.mirea.todolist.domain.usecase.ReopenTask
 import kotlinx.coroutines.launch
@@ -21,6 +22,7 @@ class ProjectViewModel @Inject constructor(
     private val projectById: ProjectById,
     private val closeTask: CloseTask,
     private val reopenTask: ReopenTask,
+    private val deleteProject: DeleteProject,
 ) : ViewModel() {
     private var _state by mutableStateOf(ProjectScreenState())
     val state get() = _state
@@ -42,6 +44,17 @@ class ProjectViewModel @Inject constructor(
             reopenTask(task)
         } else {
             closeTask(task)
+        }
+    }
+
+    fun deleteProject() {
+        val project = checkNotNull(state.project)
+        _state = state.copy(loading = true)
+        viewModelScope.launch {
+            when (val result = deleteProject.deleteProject(project.id)) {
+                is Result.Error -> throw result.error
+                is Result.Success -> Unit
+            }
         }
     }
 

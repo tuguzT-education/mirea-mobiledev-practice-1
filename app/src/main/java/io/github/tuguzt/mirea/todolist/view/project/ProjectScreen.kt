@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -29,6 +30,7 @@ fun ProjectScreen(
     onTaskClick: (Task) -> Unit = {},
     onTaskDueClick: (Task) -> Unit = {},
     onTaskCheckboxClick: (Task) -> Unit = {},
+    onDeleteProject: () -> Unit = {},
     onNavigateUp: (() -> Unit)? = null,
 ) {
     Scaffold(
@@ -49,6 +51,14 @@ fun ProjectScreen(
                                 contentDescription = stringResource(R.string.back),
                             )
                         }
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onDeleteProject) {
+                        Icon(
+                            imageVector = Icons.Rounded.Delete,
+                            contentDescription = stringResource(R.string.delete_project),
+                        )
                     }
                 },
             )

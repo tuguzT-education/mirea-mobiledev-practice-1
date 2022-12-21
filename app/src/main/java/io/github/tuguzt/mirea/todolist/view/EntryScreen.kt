@@ -3,6 +3,7 @@ package io.github.tuguzt.mirea.todolist.view
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -44,7 +45,9 @@ fun EntryScreen(
             composable(route = "project/{id}") { backStackEntry ->
                 val viewModel: ProjectViewModel = hiltViewModel()
                 val projectId = checkNotNull(backStackEntry.arguments?.getString("id"))
-                viewModel.setup(projectId)
+                LaunchedEffect(projectId) {
+                    viewModel.setup(projectId)
+                }
 
                 if (!viewModel.state.loading) {
                     ProjectScreen(
@@ -59,6 +62,11 @@ fun EntryScreen(
                             // TODO change due of the task
                         },
                         onTaskCheckboxClick = viewModel::changeTaskCompletion,
+                        onDeleteProject = {
+                            viewModel.deleteProject()
+                            mainViewModel.update()
+                            navController.navigateUp()
+                        },
                         onNavigateUp = navController::navigateUp,
                     )
                 }
@@ -79,12 +87,18 @@ fun EntryScreen(
             composable(route = "task/{taskId}") { backStackEntry ->
                 val viewModel: TaskViewModel = hiltViewModel()
                 val taskId = checkNotNull(backStackEntry.arguments?.getString("taskId"))
-                viewModel.setup(taskId)
+                LaunchedEffect(taskId) {
+                    viewModel.setup(taskId)
+                }
 
                 if (!viewModel.state.loading) {
                     TaskScreen(
                         task = checkNotNull(viewModel.state.task),
                         onTaskCompletion = viewModel::changeTaskCompletion,
+                        onDeleteTask = {
+                            viewModel.deleteTask()
+                            navController.navigateUp()
+                        },
                         onNavigateUp = navController::navigateUp,
                     )
                 }
@@ -95,7 +109,9 @@ fun EntryScreen(
             ) { backStackEntry ->
                 val viewModel: AddNewTaskViewModel = hiltViewModel()
                 val projectId = checkNotNull(backStackEntry.arguments?.getString("id"))
-                viewModel.setup(projectId)
+                LaunchedEffect(projectId) {
+                    viewModel.setup(projectId)
+                }
 
                 AddNewTaskScreen(
                     taskName = viewModel.taskName,
