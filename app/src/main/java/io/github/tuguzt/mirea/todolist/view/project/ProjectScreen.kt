@@ -16,6 +16,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.halilibo.richtext.ui.material3.SetupMaterial3RichText
 import io.github.tuguzt.mirea.todolist.R
+import io.github.tuguzt.mirea.todolist.domain.model.Id
 import io.github.tuguzt.mirea.todolist.domain.model.Project
 import io.github.tuguzt.mirea.todolist.domain.model.Task
 import io.github.tuguzt.mirea.todolist.view.task.TaskCard
@@ -85,7 +86,7 @@ fun ProjectScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            items(project.tasks, key = Task::id) { task ->
+            items(project.tasks, key = { it.id.value }) { task ->
                 TaskCard(
                     task = task,
                     modifier = Modifier.fillMaxWidth(),
@@ -104,11 +105,11 @@ private fun ProjectScreen() {
     ToDoListTheme {
         SetupMaterial3RichText {
             val project = Project(
-                id = "42",
+                id = Id("42"),
                 name = "My project",
                 tasks = listOf(
                     Task(
-                        id = "42",
+                        id = Id("42"),
                         name = "Hello World",
                         completed = false,
                         content = "",
@@ -116,7 +117,7 @@ private fun ProjectScreen() {
                         createdAt = Clock.System.now(),
                     ),
                     Task(
-                        id = "43",
+                        id = Id("43"),
                         name = "Some task",
                         completed = true,
                         content = "",

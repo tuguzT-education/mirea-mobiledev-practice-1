@@ -7,6 +7,8 @@ import io.github.tuguzt.mirea.todolist.data.datasource.local.model.TaskEntity
 import io.github.tuguzt.mirea.todolist.domain.DomainError
 import io.github.tuguzt.mirea.todolist.domain.DomainResult
 import io.github.tuguzt.mirea.todolist.domain.error
+import io.github.tuguzt.mirea.todolist.domain.model.CreateProject
+import io.github.tuguzt.mirea.todolist.domain.model.Id
 import io.github.tuguzt.mirea.todolist.domain.model.Project
 import io.github.tuguzt.mirea.todolist.domain.model.UpdateProject
 import io.github.tuguzt.mirea.todolist.domain.success
@@ -23,19 +25,19 @@ public class LocalProjectDataSource(client: DatabaseClient) : ProjectDataSource 
             success(projectBox.all.map(ProjectEntity::toDomain))
         }
 
-    override suspend fun findById(id: String): DomainResult<Project?> =
+    override suspend fun findById(id: Id<Project>): DomainResult<Project?> =
         withContext(Dispatchers.IO) {
             val query = projectBox.query {
                 val stringOrder = QueryBuilder.StringOrder.CASE_SENSITIVE
-                equal(ProjectEntity_.uid, id, stringOrder)
+                equal(ProjectEntity_.uid, id.value, stringOrder)
             }
             val entity = query.findUnique()
             success(entity?.toDomain())
         }
 
-    override suspend fun create(name: String): DomainResult<Project> =
+    override suspend fun create(create: CreateProject): DomainResult<Project> =
         withContext(Dispatchers.IO) {
-            var entity = ProjectEntity(name = name)
+            var entity = ProjectEntity(name = create.name)
             val id = projectBox.put(entity)
 
             entity = projectBox[id]
@@ -48,18 +50,19 @@ public class LocalProjectDataSource(client: DatabaseClient) : ProjectDataSource 
         withContext(Dispatchers.IO) {
             val query = projectBox.query {
                 val stringOrder = QueryBuilder.StringOrder.CASE_SENSITIVE
-                equal(ProjectEntity_.uid, project.id, stringOrder)
+                equal(ProjectEntity_.uid, project.id.value, stringOrder)
             }
-            val entity = query.findUnique() ?: ProjectEntity(uid = project.id, name = project.name)
+            val entity = query.findUnique()
+                ?: ProjectEntity(uid = project.id.value, name = project.name)
             projectBox.put(entity)
             success(entity.toDomain())
         }
 
-    override suspend fun update(id: String, update: UpdateProject): DomainResult<Project> =
+    override suspend fun update(id: Id<Project>, update: UpdateProject): DomainResult<Project> =
         withContext(Dispatchers.IO) {
             val query = projectBox.query {
                 val stringOrder = QueryBuilder.StringOrder.CASE_SENSITIVE
-                equal(ProjectEntity_.uid, id, stringOrder)
+                equal(ProjectEntity_.uid, id.value, stringOrder)
             }
             val entity = query.findUnique() ?: kotlin.run {
                 val error = DomainError.StorageError(
@@ -73,11 +76,11 @@ public class LocalProjectDataSource(client: DatabaseClient) : ProjectDataSource 
             success(entity.toDomain())
         }
 
-    override suspend fun delete(id: String): DomainResult<Unit> =
+    override suspend fun delete(id: Id<Project>): DomainResult<Unit> =
         withContext(Dispatchers.IO) {
             val query = projectBox.query {
                 val stringOrder = QueryBuilder.StringOrder.CASE_SENSITIVE
-                equal(ProjectEntity_.uid, id, stringOrder)
+                equal(ProjectEntity_.uid, id.value, stringOrder)
             }
             val entity = query.findUnique() ?: kotlin.run {
                 val error = DomainError.StorageError(
@@ -92,7 +95,7 @@ public class LocalProjectDataSource(client: DatabaseClient) : ProjectDataSource 
 }
 
 internal fun ProjectEntity.toDomain(): Project = Project(
-    id = requireNotNull(uid),
+    id = Id(value = requireNotNull(uid)),
     name = requireNotNull(name),
     tasks = tasks.map(TaskEntity::toDomain),
 )

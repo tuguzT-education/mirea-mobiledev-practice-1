@@ -21,44 +21,40 @@ public class LocalTaskDataSource(client: DatabaseClient) : TaskDataSource {
     private val projectBox = client.projectBox
     private val taskBox = client.taskBox
 
-    override suspend fun getAll(parent: Project): DomainResult<List<Task>> =
+    override suspend fun getAll(project: Id<Project>): DomainResult<List<Task>> =
         withContext(Dispatchers.IO) {
             val data = taskBox.all
-                .filter { task -> parent.tasks.find { it.id == task.uid } != null }
+                .filter { task -> task.project.target?.uid == project.value }
                 .map(TaskEntity::toDomain)
             success(data)
         }
 
-    override suspend fun findById(id: String): DomainResult<Task?> =
+    override suspend fun findById(id: Id<Task>): DomainResult<Task?> =
         withContext(Dispatchers.IO) {
             val query = taskBox.query {
                 val stringOrder = QueryBuilder.StringOrder.CASE_SENSITIVE
-                equal(TaskEntity_.uid, id, stringOrder)
+                equal(TaskEntity_.uid, id.value, stringOrder)
             }
             val entity = query.findUnique()
             success(entity?.toDomain())
         }
 
-    override suspend fun create(
-        parent: Project,
-        name: String,
-        content: String,
-    ): DomainResult<Task> =
+    override suspend fun create(create: CreateTask): DomainResult<Task> =
         withContext(Dispatchers.IO) {
             val projectQuery = projectBox.query {
                 val stringOrder = QueryBuilder.StringOrder.CASE_SENSITIVE
-                equal(ProjectEntity_.uid, parent.id, stringOrder)
+                equal(ProjectEntity_.uid, create.project.value, stringOrder)
             }
             val project = projectQuery.findUnique() ?: kotlin.run {
                 val error = DomainError.StorageError(
-                    message = "Project was not found by id ${parent.id}",
+                    message = "Project was not found by id ${create.project}",
                     cause = null,
                 )
                 return@withContext error(error)
             }
             var entity = TaskEntity(
-                name = name,
-                content = content,
+                name = create.name,
+                content = create.content,
                 createdAt = Clock.System.now().toEpochMilliseconds(),
             )
             entity.project.target = project
@@ -70,31 +66,31 @@ public class LocalTaskDataSource(client: DatabaseClient) : TaskDataSource {
             success(entity.toDomain())
         }
 
-    public suspend fun save(projectId: String, task: Task): DomainResult<Task> =
+    public suspend fun save(project: Id<Project>, task: Task): DomainResult<Task> =
         withContext(Dispatchers.IO) {
             val projectQuery = projectBox.query {
                 val stringOrder = QueryBuilder.StringOrder.CASE_SENSITIVE
-                equal(ProjectEntity_.uid, projectId, stringOrder)
+                equal(ProjectEntity_.uid, project.value, stringOrder)
             }
-            val project = projectQuery.findUnique() ?: kotlin.run {
+            val projectEntity = projectQuery.findUnique() ?: kotlin.run {
                 val error = DomainError.StorageError(
-                    message = "Project was not found by id $projectId",
+                    message = "Project was not found by id $project",
                     cause = null,
                 )
                 return@withContext error(error)
             }
             val query = taskBox.query {
                 val stringOrder = QueryBuilder.StringOrder.CASE_SENSITIVE
-                equal(TaskEntity_.uid, task.id, stringOrder)
+                equal(TaskEntity_.uid, task.id.value, stringOrder)
             }
             val entity = query.findUnique() ?: TaskEntity(
-                uid = task.id,
+                uid = task.id.value,
                 name = task.name,
                 content = task.content,
                 completed = task.completed,
                 createdAt = task.createdAt.toEpochMilliseconds(),
             )
-            entity.project.target = project
+            entity.project.target = projectEntity
             entity.due.target = task.due?.let { due ->
                 TaskDueEntity(string = due.string, datetime = due.datetime.toEpochMilliseconds())
             }
@@ -102,11 +98,11 @@ public class LocalTaskDataSource(client: DatabaseClient) : TaskDataSource {
             success(entity.toDomain())
         }
 
-    override suspend fun update(id: String, update: UpdateTask): DomainResult<Task> =
+    override suspend fun update(id: Id<Task>, update: UpdateTask): DomainResult<Task> =
         withContext(Dispatchers.IO) {
             val query = taskBox.query {
                 val stringOrder = QueryBuilder.StringOrder.CASE_SENSITIVE
-                equal(TaskEntity_.uid, id, stringOrder)
+                equal(TaskEntity_.uid, id.value, stringOrder)
             }
             val entity = query.findUnique() ?: kotlin.run {
                 val error = DomainError.StorageError(
@@ -125,7 +121,7 @@ public class LocalTaskDataSource(client: DatabaseClient) : TaskDataSource {
                 entity.completed = completed
             }
             update.due?.let { due ->
-                if (due.isNotEmpty()) {
+                if (due.hasUpdates()) {
                     val dueEntity = entity.due.target ?: TaskDueEntity()
                     due.string?.let { string ->
                         dueEntity.string = string
@@ -140,11 +136,11 @@ public class LocalTaskDataSource(client: DatabaseClient) : TaskDataSource {
             success(entity.toDomain())
         }
 
-    override suspend fun delete(id: String): DomainResult<Unit> =
+    override suspend fun delete(id: Id<Task>): DomainResult<Unit> =
         withContext(Dispatchers.IO) {
             val query = taskBox.query {
                 val stringOrder = QueryBuilder.StringOrder.CASE_SENSITIVE
-                equal(TaskEntity_.uid, id, stringOrder)
+                equal(TaskEntity_.uid, id.value, stringOrder)
             }
             val entity = query.findUnique() ?: kotlin.run {
                 val error = DomainError.StorageError(
@@ -159,7 +155,7 @@ public class LocalTaskDataSource(client: DatabaseClient) : TaskDataSource {
 }
 
 internal fun TaskEntity.toDomain(): Task = Task(
-    id = requireNotNull(uid),
+    id = Id(value = requireNotNull(uid)),
     name = requireNotNull(name),
     content = requireNotNull(content),
     completed = completed,

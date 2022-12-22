@@ -1,13 +1,11 @@
 package io.github.tuguzt.mirea.todolist.domain.usecase
 
 import io.github.tuguzt.mirea.todolist.domain.DomainResult
-import io.github.tuguzt.mirea.todolist.domain.model.Project
+import io.github.tuguzt.mirea.todolist.domain.model.CreateTask
 import io.github.tuguzt.mirea.todolist.domain.model.Task
+import io.github.tuguzt.mirea.todolist.domain.repository.TaskRepository
 
-public interface CreateTask {
-    public suspend fun createTask(
-        parent: Project,
-        name: String,
-        content: String,
-    ): DomainResult<Task>
+public class CreateTask(private val repository: TaskRepository) {
+    public suspend fun createTask(create: CreateTask): DomainResult<Task> =
+        repository.create(create)
 }

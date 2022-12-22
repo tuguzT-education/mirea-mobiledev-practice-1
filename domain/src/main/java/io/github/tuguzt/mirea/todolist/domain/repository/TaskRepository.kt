@@ -1,9 +1,9 @@
-package io.github.tuguzt.mirea.todolist.data.datasource
+package io.github.tuguzt.mirea.todolist.domain.repository
 
 import io.github.tuguzt.mirea.todolist.domain.DomainResult
 import io.github.tuguzt.mirea.todolist.domain.model.*
 
-public interface TaskDataSource {
+public interface TaskRepository {
     public suspend fun getAll(project: Id<Project>): DomainResult<List<Task>>
 
     public suspend fun findById(id: Id<Task>): DomainResult<Task?>

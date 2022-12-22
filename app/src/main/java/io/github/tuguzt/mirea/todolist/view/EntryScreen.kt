@@ -17,6 +17,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import io.github.tuguzt.mirea.todolist.R
+import io.github.tuguzt.mirea.todolist.domain.model.Id
+import io.github.tuguzt.mirea.todolist.domain.model.Project
+import io.github.tuguzt.mirea.todolist.domain.model.Task
 import io.github.tuguzt.mirea.todolist.view.project.AddNewProjectScreen
 import io.github.tuguzt.mirea.todolist.view.project.ProjectScreen
 import io.github.tuguzt.mirea.todolist.view.task.AddNewTaskScreen
@@ -54,7 +57,8 @@ fun EntryScreen(
                 val viewModel: ProjectViewModel = hiltViewModel()
                 val projectId = checkNotNull(backStackEntry.arguments?.getString("id"))
                 LaunchedEffect(projectId) {
-                    viewModel.setup(projectId)
+                    val id = Id<Project>(projectId)
+                    viewModel.setup(id)
                 }
 
                 if (!viewModel.state.loading) {
@@ -117,7 +121,8 @@ fun EntryScreen(
                 val viewModel: TaskViewModel = hiltViewModel()
                 val taskId = checkNotNull(backStackEntry.arguments?.getString("taskId"))
                 LaunchedEffect(taskId) {
-                    viewModel.setup(taskId)
+                    val id = Id<Task>(taskId)
+                    viewModel.setup(id)
                 }
 
                 if (!viewModel.state.loading) {
@@ -150,7 +155,8 @@ fun EntryScreen(
                 val viewModel: AddNewTaskViewModel = hiltViewModel()
                 val projectId = checkNotNull(backStackEntry.arguments?.getString("id"))
                 LaunchedEffect(projectId) {
-                    viewModel.setup(projectId)
+                    val id = Id<Project>(projectId)
+                    viewModel.setup(id)
                 }
 
                 AddNewTaskScreen(

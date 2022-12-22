@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.halilibo.richtext.ui.material3.SetupMaterial3RichText
+import io.github.tuguzt.mirea.todolist.domain.model.Id
 import io.github.tuguzt.mirea.todolist.domain.model.Project
 import io.github.tuguzt.mirea.todolist.domain.model.Task
 import io.github.tuguzt.mirea.todolist.view.theme.ToDoListTheme
@@ -60,11 +61,11 @@ private fun ProjectCard() {
         SetupMaterial3RichText {
             ProjectCard(
                 project = Project(
-                    id = "42",
+                    id = Id("42"),
                     name = "New project",
                     tasks = listOf(
                         Task(
-                            id = "42",
+                            id = Id("42"),
                             name = "Hello World",
                             completed = false,
                             content = "",
@@ -72,7 +73,7 @@ private fun ProjectCard() {
                             createdAt = Clock.System.now()
                         ),
                         Task(
-                            id = "43",
+                            id = Id("43"),
                             name = "Some task",
                             completed = true,
                             content = "",

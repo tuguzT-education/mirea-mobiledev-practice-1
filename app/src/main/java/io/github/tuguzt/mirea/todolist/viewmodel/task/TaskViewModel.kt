@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.tuguzt.mirea.todolist.domain.Result
+import io.github.tuguzt.mirea.todolist.domain.model.Id
 import io.github.tuguzt.mirea.todolist.domain.model.Task
 import io.github.tuguzt.mirea.todolist.domain.usecase.CloseTask
 import io.github.tuguzt.mirea.todolist.domain.usecase.DeleteTask
@@ -36,9 +37,9 @@ class TaskViewModel @Inject constructor(
     private var _state by mutableStateOf(TaskScreenState())
     val state get() = _state
 
-    fun setup(taskId: String) {
+    fun setup(id: Id<Task>) {
         viewModelScope.launch {
-            _state = when (val result = taskById.taskById(taskId)) {
+            _state = when (val result = taskById.taskById(id)) {
                 is Result.Error -> {
                     logger.error(result.error) { "Unexpected error" }
                     val message = UserMessage(result.error.kind())

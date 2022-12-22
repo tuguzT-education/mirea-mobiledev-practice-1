@@ -8,7 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.tuguzt.mirea.todolist.domain.Result
-import io.github.tuguzt.mirea.todolist.domain.usecase.CreateProject
+import io.github.tuguzt.mirea.todolist.domain.model.CreateProject
 import io.github.tuguzt.mirea.todolist.viewmodel.DomainErrorKind
 import io.github.tuguzt.mirea.todolist.viewmodel.MessageState
 import io.github.tuguzt.mirea.todolist.viewmodel.UserMessage
@@ -17,10 +17,11 @@ import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import java.util.*
 import javax.inject.Inject
+import io.github.tuguzt.mirea.todolist.domain.usecase.CreateProject as CreateProjectUseCase
 
 @HiltViewModel
 class AddNewProjectViewModel @Inject constructor(
-    private val createProject: CreateProject,
+    private val createProject: CreateProjectUseCase,
 ) : ViewModel() {
     companion object {
         private val logger = KotlinLogging.logger {}
@@ -39,7 +40,8 @@ class AddNewProjectViewModel @Inject constructor(
 
     fun addNewProject() {
         viewModelScope.launch {
-            when (val result = createProject.createProject(state.name)) {
+            val create = CreateProject(state.name)
+            when (val result = createProject.createProject(create)) {
                 is Result.Error -> {
                     logger.error(result.error) { "Unexpected error" }
                     val message = UserMessage(result.error.kind())

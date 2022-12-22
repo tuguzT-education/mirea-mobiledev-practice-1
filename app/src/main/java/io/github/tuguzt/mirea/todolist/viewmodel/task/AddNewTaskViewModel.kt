@@ -8,8 +8,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.tuguzt.mirea.todolist.domain.Result
+import io.github.tuguzt.mirea.todolist.domain.model.CreateTask
+import io.github.tuguzt.mirea.todolist.domain.model.Id
 import io.github.tuguzt.mirea.todolist.domain.model.Project
-import io.github.tuguzt.mirea.todolist.domain.usecase.CreateTask
 import io.github.tuguzt.mirea.todolist.domain.usecase.ProjectById
 import io.github.tuguzt.mirea.todolist.viewmodel.DomainErrorKind
 import io.github.tuguzt.mirea.todolist.viewmodel.MessageState
@@ -19,11 +20,12 @@ import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import java.util.*
 import javax.inject.Inject
+import io.github.tuguzt.mirea.todolist.domain.usecase.CreateTask as CreateTaskUseCase
 
 @HiltViewModel
 class AddNewTaskViewModel @Inject constructor(
     private val projectById: ProjectById,
-    private val createTask: CreateTask,
+    private val createTask: CreateTaskUseCase,
 ) : ViewModel() {
     companion object {
         private val logger = KotlinLogging.logger {}
@@ -32,16 +34,16 @@ class AddNewTaskViewModel @Inject constructor(
     private var _state by mutableStateOf(AddNewTaskScreenState())
     val state get() = _state
 
-    fun setup(parentId: String) {
+    fun setup(id: Id<Project>) {
         viewModelScope.launch {
-            _state = when (val result = projectById.projectById(parentId)) {
+            _state = when (val result = projectById.projectById(id)) {
                 is Result.Error -> {
                     logger.error(result.error) { "Unexpected error" }
                     val message = UserMessage(result.error.kind())
                     val userMessages = state.userMessages + message
                     state.copy(userMessages = userMessages)
                 }
-                is Result.Success -> state.copy(parent = result.data)
+                is Result.Success -> state.copy(project = result.data)
             }
         }
     }
@@ -62,8 +64,9 @@ class AddNewTaskViewModel @Inject constructor(
 
     fun addNewTask() {
         viewModelScope.launch {
-            val parent = checkNotNull(state.parent)
-            when (val result = createTask.createTask(parent, state.name, state.content)) {
+            val project = checkNotNull(state.project)
+            val create = CreateTask(project.id, state.name, state.content)
+            when (val result = createTask.createTask(create)) {
                 is Result.Error -> {
                     logger.error(result.error) { "Unexpected error" }
                     val message = UserMessage(result.error.kind())
@@ -83,7 +86,7 @@ class AddNewTaskViewModel @Inject constructor(
 
 @Immutable
 data class AddNewTaskScreenState(
-    val parent: Project? = null,
+    val project: Project? = null,
     val name: String = "",
     val content: String = "",
     override val userMessages: List<UserMessage<DomainErrorKind>> = listOf(),

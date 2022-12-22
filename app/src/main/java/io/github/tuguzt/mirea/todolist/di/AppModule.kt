@@ -4,9 +4,8 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import io.github.tuguzt.mirea.todolist.data.interactor.*
-import io.github.tuguzt.mirea.todolist.data.repository.ProjectRepository
-import io.github.tuguzt.mirea.todolist.data.repository.TaskRepository
+import io.github.tuguzt.mirea.todolist.domain.repository.ProjectRepository
+import io.github.tuguzt.mirea.todolist.domain.repository.TaskRepository
 import io.github.tuguzt.mirea.todolist.domain.usecase.*
 
 @Module
@@ -14,41 +13,41 @@ import io.github.tuguzt.mirea.todolist.domain.usecase.*
 object AppModule {
     @Provides
     fun provideAllProjects(repository: ProjectRepository): AllProjects =
-        AllProjectsInteractor(repository)
+        AllProjects(repository)
 
     @Provides
     fun provideAllTasks(repository: TaskRepository): AllTasks =
-        AllTasksInteractor(repository)
+        AllTasks(repository)
 
     @Provides
     fun provideCloseTask(repository: TaskRepository): CloseTask =
-        CloseTaskInteractor(repository)
+        CloseTask(repository)
 
     @Provides
     fun provideCreateProject(repository: ProjectRepository): CreateProject =
-        CreateProjectInteractor(repository)
+        CreateProject(repository)
 
     @Provides
     fun provideCreateTask(repository: TaskRepository): CreateTask =
-        CreateTaskInteractor(repository)
+        CreateTask(repository)
 
     @Provides
     fun provideDeleteProject(repository: ProjectRepository): DeleteProject =
-        DeleteProjectInteractor(repository)
+        DeleteProject(repository)
 
     @Provides
     fun provideDeleteTask(repository: TaskRepository): DeleteTask =
-        DeleteTaskInteractor(repository)
+        DeleteTask(repository)
 
     @Provides
     fun provideProjectById(repository: ProjectRepository): ProjectById =
-        ProjectByIdInteractor(repository)
+        ProjectById(repository)
 
     @Provides
     fun provideReopenTask(repository: TaskRepository): ReopenTask =
-        ReopenTaskInteractor(repository)
+        ReopenTask(repository)
 
     @Provides
     fun provideTaskById(repository: TaskRepository): TaskById =
-        TaskByIdInteractor(repository)
+        TaskById(repository)
 }

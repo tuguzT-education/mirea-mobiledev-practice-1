@@ -19,6 +19,7 @@ import com.halilibo.richtext.markdown.Markdown
 import com.halilibo.richtext.ui.RichText
 import com.halilibo.richtext.ui.material3.SetupMaterial3RichText
 import io.github.tuguzt.mirea.todolist.R
+import io.github.tuguzt.mirea.todolist.domain.model.Id
 import io.github.tuguzt.mirea.todolist.domain.model.Task
 import io.github.tuguzt.mirea.todolist.domain.model.TaskDue
 import io.github.tuguzt.mirea.todolist.view.theme.ToDoListTheme
@@ -133,7 +134,7 @@ private fun TaskScreen() {
     ToDoListTheme {
         SetupMaterial3RichText {
             val task = Task(
-                id = "42",
+                id = Id("42"),
                 name = "Hello World",
                 content = """
                     # Title

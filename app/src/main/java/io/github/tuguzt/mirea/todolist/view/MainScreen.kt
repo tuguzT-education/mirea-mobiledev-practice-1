@@ -19,6 +19,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.halilibo.richtext.ui.material3.SetupMaterial3RichText
 import io.github.tuguzt.mirea.todolist.R
+import io.github.tuguzt.mirea.todolist.domain.model.Id
 import io.github.tuguzt.mirea.todolist.domain.model.Project
 import io.github.tuguzt.mirea.todolist.view.project.ProjectCard
 import io.github.tuguzt.mirea.todolist.view.theme.ToDoListTheme
@@ -113,7 +114,7 @@ private fun LazyListScope.projectGroup(
             )
         }
     }
-    items(projects, key = Project::id) { project ->
+    items(projects, key = { it.id.value }) { project ->
         ProjectCard(
             project = project,
             modifier = Modifier
@@ -139,7 +140,7 @@ private fun ProjectGroup() {
                 ) {
                     val projects = listOf(
                         Project(
-                            id = "42",
+                            id = Id("42"),
                             name = "Hello World",
                             tasks = listOf(),
                         ),

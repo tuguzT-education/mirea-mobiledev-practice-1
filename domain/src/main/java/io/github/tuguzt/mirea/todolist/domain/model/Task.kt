@@ -3,17 +3,18 @@ package io.github.tuguzt.mirea.todolist.domain.model
 import kotlinx.datetime.Instant
 
 public data class Task(
-    val id: String,
+    override val id: Id<Task>,
     val name: String,
     val content: String,
     val completed: Boolean,
     val due: TaskDue?,
     val createdAt: Instant,
-)
+) : Node
 
-public data class TaskDue(
-    val string: String,
-    val datetime: Instant,
+public data class CreateTask(
+    val project: Id<Project>,
+    val name: String,
+    val content: String,
 )
 
 public data class UpdateTask(
@@ -23,17 +24,7 @@ public data class UpdateTask(
     val due: UpdateTaskDue? = null,
 )
 
-public fun UpdateTask.isEmpty(): Boolean =
+public fun UpdateTask.hasNoUpdates(): Boolean =
     name == null && content == null && completed == null && due == null
 
-public fun UpdateTask.isNotEmpty(): Boolean = !isEmpty()
-
-public data class UpdateTaskDue(
-    val string: String? = null,
-    val datetime: Instant? = null,
-)
-
-public fun UpdateTaskDue.isEmpty(): Boolean =
-    string == null && datetime == null
-
-public fun UpdateTaskDue.isNotEmpty(): Boolean = !isEmpty()
+public fun UpdateTask.hasUpdates(): Boolean = !hasNoUpdates()

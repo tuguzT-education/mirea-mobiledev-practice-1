@@ -17,40 +17,36 @@ import kotlinx.datetime.atStartOfDayIn
 public class RemoteTaskDataSource(client: ApiClient) : TaskDataSource {
     private val taskApi = client.taskApi
 
-    override suspend fun getAll(parent: Project): DomainResult<List<Task>> =
-        taskApi.all(parent.id).toResult().map { tasks -> tasks.map(ApiTask::toDomain) }
+    override suspend fun getAll(project: Id<Project>): DomainResult<List<Task>> =
+        taskApi.all(project.value).toResult().map { tasks -> tasks.map(ApiTask::toDomain) }
 
-    override suspend fun findById(id: String): DomainResult<Task?> =
-        taskApi.find(id).toResult().map(ApiTask::toDomain)
+    override suspend fun findById(id: Id<Task>): DomainResult<Task?> =
+        taskApi.find(id.value).toResult().map(ApiTask::toDomain)
 
-    override suspend fun create(
-        parent: Project,
-        name: String,
-        content: String,
-    ): DomainResult<Task> {
-        val create = ApiCreateTask(
-            projectId = parent.id,
-            content = name,
-            description = content,
+    override suspend fun create(create: CreateTask): DomainResult<Task> {
+        val apiCreate = ApiCreateTask(
+            projectId = create.project.value,
+            content = create.name,
+            description = create.content,
         )
-        return taskApi.create(create).toResult().map(ApiTask::toDomain)
+        return taskApi.create(apiCreate).toResult().map(ApiTask::toDomain)
     }
 
-    override suspend fun update(id: String, update: UpdateTask): DomainResult<Task> {
+    override suspend fun update(id: Id<Task>, update: UpdateTask): DomainResult<Task> {
         update.completed?.let { completed ->
             if (completed) {
-                when (val result = taskApi.close(id).toResult()) {
+                when (val result = taskApi.close(id.value).toResult()) {
                     is Result.Error -> return result.cast()
                     is Result.Success -> Unit
                 }
             } else {
-                when (val result = taskApi.reopen(id).toResult()) {
+                when (val result = taskApi.reopen(id.value).toResult()) {
                     is Result.Error -> return result.cast()
                     is Result.Success -> Unit
                 }
             }
         }
-        if (update.copy(completed = null).isNotEmpty()) {
+        if (update.copy(completed = null).hasUpdates()) {
             val apiUpdate = ApiUpdateTask(
                 content = update.name,
                 description = update.content,
@@ -62,17 +58,17 @@ public class RemoteTaskDataSource(client: ApiClient) : TaskDataSource {
                 dueLang = null,
                 assigneeId = null,
             )
-            return taskApi.update(id, apiUpdate).toResult().map(ApiTask::toDomain)
+            return taskApi.update(id.value, apiUpdate).toResult().map(ApiTask::toDomain)
         }
         return findById(id).map(::checkNotNull)
     }
 
-    override suspend fun delete(id: String): DomainResult<Unit> =
-        taskApi.delete(id).toResult()
+    override suspend fun delete(id: Id<Task>): DomainResult<Unit> =
+        taskApi.delete(id.value).toResult()
 }
 
 internal fun ApiTask.toDomain(): Task = Task(
-    id = id,
+    id = Id(id),
     name = content,
     content = description,
     completed = isCompleted,

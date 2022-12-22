@@ -1,11 +1,11 @@
 package io.github.tuguzt.mirea.todolist.data.datasource.remote
 
 import io.github.tuguzt.mirea.todolist.data.datasource.ProjectDataSource
-import io.github.tuguzt.mirea.todolist.data.datasource.remote.model.ApiCreateProject
-import io.github.tuguzt.mirea.todolist.data.datasource.remote.model.ApiProject
+import io.github.tuguzt.mirea.todolist.data.datasource.remote.model.*
 import io.github.tuguzt.mirea.todolist.data.datasource.remote.model.ApiTask
-import io.github.tuguzt.mirea.todolist.data.datasource.remote.model.toResult
 import io.github.tuguzt.mirea.todolist.domain.*
+import io.github.tuguzt.mirea.todolist.domain.model.CreateProject
+import io.github.tuguzt.mirea.todolist.domain.model.Id
 import io.github.tuguzt.mirea.todolist.domain.model.Project
 import io.github.tuguzt.mirea.todolist.domain.model.UpdateProject
 import kotlinx.coroutines.async
@@ -31,8 +31,8 @@ public class RemoteProjectDataSource(client: ApiClient) : ProjectDataSource {
             }
         }
 
-    override suspend fun findById(id: String): DomainResult<Project?> =
-        when (val projectResult = projectApi.find(id).toResult()) {
+    override suspend fun findById(id: Id<Project>): DomainResult<Project?> =
+        when (val projectResult = projectApi.find(id.value).toResult()) {
             is Result.Error -> projectResult.cast()
             is Result.Success -> when (val toDomainResult = projectResult.data.toDomain()) {
                 is Result.Error -> toDomainResult.cast()
@@ -40,32 +40,43 @@ public class RemoteProjectDataSource(client: ApiClient) : ProjectDataSource {
             }
         }
 
-    override suspend fun create(name: String): DomainResult<Project> =
-        when (val projectResult = projectApi.create(create = ApiCreateProject(name)).toResult()) {
+    override suspend fun create(create: CreateProject): DomainResult<Project> {
+        val apiCreate = ApiCreateProject(name = create.name)
+        return when (val projectResult = projectApi.create(apiCreate).toResult()) {
             is Result.Error -> projectResult.cast()
             is Result.Success -> when (val toDomainResult = projectResult.data.toDomain()) {
                 is Result.Error -> toDomainResult.cast()
                 is Result.Success -> success(toDomainResult.data)
             }
         }
-
-    override suspend fun update(id: String, update: UpdateProject): DomainResult<Project> {
-        TODO("Not yet implemented")
     }
 
-    override suspend fun delete(id: String): DomainResult<Unit> =
-        projectApi.delete(id).toResult()
+    override suspend fun update(id: Id<Project>, update: UpdateProject): DomainResult<Project> {
+        val apiUpdate = ApiUpdateProject(name = update.name)
+        return when (val projectResult = projectApi.update(id.value, apiUpdate).toResult()) {
+            is Result.Error -> projectResult.cast()
+            is Result.Success -> when (val toDomainResult = projectResult.data.toDomain()) {
+                is Result.Error -> toDomainResult.cast()
+                is Result.Success -> success(toDomainResult.data)
+            }
+        }
+    }
+
+    override suspend fun delete(id: Id<Project>): DomainResult<Unit> =
+        projectApi.delete(id.value).toResult()
 
     private suspend fun ApiProject.toDomain(): DomainResult<Project> {
         val tasks = taskApi.all(id).toResult().map { tasks ->
             tasks.map(ApiTask::toDomain)
         }
         return tasks.map {
-            Project(id = id, name = name, tasks = it)
+            Project(id = Id(id), name = name, tasks = it)
         }
     }
 }
 
-internal suspend fun <A, B> Iterable<A>.pmap(f: suspend (A) -> B): List<B> = coroutineScope {
-    map { async { f(it) } }.awaitAll()
-}
+@Suppress("SpellCheckingInspection")
+internal suspend fun <A, B> Iterable<A>.pmap(f: suspend (A) -> B): List<B> =
+    coroutineScope {
+        map { async { f(it) } }.awaitAll()
+    }
