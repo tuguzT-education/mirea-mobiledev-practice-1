@@ -19,4 +19,5 @@
     <string name="task_content">Task content</string>
     <string name="delete_project">Delete project</string>
     <string name="delete_task">Delete task</string>
+    <string name="dismiss">Dismiss</string>
 </resources>

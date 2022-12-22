@@ -78,6 +78,8 @@ dependencies {
     implementation("com.google.android.material:material:1.7.0")
     implementation("com.google.dagger:hilt-android:2.44")
     kapt("com.google.dagger:hilt-android-compiler:2.44")
+    implementation("org.slf4j:slf4j-android:1.7.36")
+    implementation("io.github.microutils:kotlin-logging-jvm:2.1.23")
 
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.2.2")
 

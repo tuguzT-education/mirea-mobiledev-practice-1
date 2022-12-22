@@ -32,6 +32,7 @@ fun ProjectScreen(
     onTaskCheckboxClick: (Task) -> Unit = {},
     onDeleteProject: () -> Unit = {},
     onNavigateUp: (() -> Unit)? = null,
+    snackbarHostState: SnackbarHostState? = null,
 ) {
     Scaffold(
         topBar = {
@@ -69,6 +70,11 @@ fun ProjectScreen(
                     imageVector = Icons.Rounded.Add,
                     contentDescription = stringResource(R.string.add_new_task),
                 )
+            }
+        },
+        snackbarHost = {
+            snackbarHostState?.let {
+                SnackbarHost(hostState = it)
             }
         },
     ) { padding ->

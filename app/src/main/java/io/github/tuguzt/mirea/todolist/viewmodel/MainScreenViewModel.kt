@@ -12,12 +12,18 @@ import io.github.tuguzt.mirea.todolist.domain.model.Project
 import io.github.tuguzt.mirea.todolist.domain.model.Task
 import io.github.tuguzt.mirea.todolist.domain.usecase.AllProjects
 import kotlinx.coroutines.launch
+import mu.KotlinLogging
+import java.util.*
 import javax.inject.Inject
 
 @HiltViewModel
 class MainScreenViewModel @Inject constructor(
     private val allProjects: AllProjects,
 ) : ViewModel() {
+    companion object {
+        private val logger = KotlinLogging.logger {}
+    }
+
     private var _state by mutableStateOf(MainScreenState())
     val state get() = _state
 
@@ -27,20 +33,31 @@ class MainScreenViewModel @Inject constructor(
 
     fun update() {
         viewModelScope.launch {
-            when (val result = allProjects.allProjects()) {
-                is Result.Error -> throw result.error
+            _state = when (val result = allProjects.allProjects()) {
+                is Result.Error -> {
+                    logger.error(result.error) { "Unexpected error" }
+                    val message = UserMessage(result.error.kind())
+                    val userMessages = state.userMessages + message
+                    state.copy(userMessages = userMessages)
+                }
                 is Result.Success -> {
-                    _state = state.copy(projects = result.data)
+                    state.copy(projects = result.data)
                 }
             }
         }
+    }
+
+    fun userMessageShown(messageId: UUID) {
+        val messages = state.userMessages.filterNot { it.id == messageId }
+        _state = state.copy(userMessages = messages)
     }
 }
 
 @Immutable
 data class MainScreenState(
     val projects: List<Project> = listOf(),
-)
+    override val userMessages: List<UserMessage<DomainErrorKind>> = listOf(),
+) : MessageState<DomainErrorKind>
 
 val MainScreenState.todoProjects
     get() = projects.filter { project ->

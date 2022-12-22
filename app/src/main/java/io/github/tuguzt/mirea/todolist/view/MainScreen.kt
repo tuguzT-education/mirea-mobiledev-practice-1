@@ -32,6 +32,7 @@ fun MainScreen(
     state: MainScreenState,
     onProjectClick: (Project) -> Unit,
     onAddNewProjectClick: () -> Unit,
+    snackbarHostState: SnackbarHostState? = null,
 ) {
     Scaffold(
         topBar = {
@@ -45,6 +46,11 @@ fun MainScreen(
                     imageVector = Icons.Rounded.Add,
                     contentDescription = stringResource(R.string.add_new_project),
                 )
+            }
+        },
+        snackbarHost = {
+            snackbarHostState?.let {
+                SnackbarHost(hostState = it)
             }
         },
     ) { padding ->

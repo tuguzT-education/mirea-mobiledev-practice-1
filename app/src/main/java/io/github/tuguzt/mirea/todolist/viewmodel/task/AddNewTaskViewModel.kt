@@ -11,7 +11,13 @@ import io.github.tuguzt.mirea.todolist.domain.Result
 import io.github.tuguzt.mirea.todolist.domain.model.Project
 import io.github.tuguzt.mirea.todolist.domain.usecase.CreateTask
 import io.github.tuguzt.mirea.todolist.domain.usecase.ProjectById
+import io.github.tuguzt.mirea.todolist.viewmodel.DomainErrorKind
+import io.github.tuguzt.mirea.todolist.viewmodel.MessageState
+import io.github.tuguzt.mirea.todolist.viewmodel.UserMessage
+import io.github.tuguzt.mirea.todolist.viewmodel.kind
 import kotlinx.coroutines.launch
+import mu.KotlinLogging
+import java.util.*
 import javax.inject.Inject
 
 @HiltViewModel
@@ -19,14 +25,23 @@ class AddNewTaskViewModel @Inject constructor(
     private val projectById: ProjectById,
     private val createTask: CreateTask,
 ) : ViewModel() {
+    companion object {
+        private val logger = KotlinLogging.logger {}
+    }
+
     private var _state by mutableStateOf(AddNewTaskScreenState())
     val state get() = _state
 
     fun setup(parentId: String) {
         viewModelScope.launch {
-            when (val result = projectById.projectById(parentId)) {
-                is Result.Error -> throw result.error
-                is Result.Success -> _state = state.copy(parent = result.data)
+            _state = when (val result = projectById.projectById(parentId)) {
+                is Result.Error -> {
+                    logger.error(result.error) { "Unexpected error" }
+                    val message = UserMessage(result.error.kind())
+                    val userMessages = state.userMessages + message
+                    state.copy(userMessages = userMessages)
+                }
+                is Result.Success -> state.copy(parent = result.data)
             }
         }
     }
@@ -49,10 +64,20 @@ class AddNewTaskViewModel @Inject constructor(
         viewModelScope.launch {
             val parent = checkNotNull(state.parent)
             when (val result = createTask.createTask(parent, state.name, state.content)) {
-                is Result.Error -> throw result.error
+                is Result.Error -> {
+                    logger.error(result.error) { "Unexpected error" }
+                    val message = UserMessage(result.error.kind())
+                    val userMessages = state.userMessages + message
+                    _state = state.copy(userMessages = userMessages)
+                }
                 is Result.Success -> Unit
             }
         }
+    }
+
+    fun userMessageShown(messageId: UUID) {
+        val messages = state.userMessages.filterNot { it.id == messageId }
+        _state = state.copy(userMessages = messages)
     }
 }
 
@@ -61,4 +86,5 @@ data class AddNewTaskScreenState(
     val parent: Project? = null,
     val name: String = "",
     val content: String = "",
-)
+    override val userMessages: List<UserMessage<DomainErrorKind>> = listOf(),
+) : MessageState<DomainErrorKind>

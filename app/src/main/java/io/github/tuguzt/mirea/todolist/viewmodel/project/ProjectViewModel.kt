@@ -14,7 +14,13 @@ import io.github.tuguzt.mirea.todolist.domain.usecase.CloseTask
 import io.github.tuguzt.mirea.todolist.domain.usecase.DeleteProject
 import io.github.tuguzt.mirea.todolist.domain.usecase.ProjectById
 import io.github.tuguzt.mirea.todolist.domain.usecase.ReopenTask
+import io.github.tuguzt.mirea.todolist.viewmodel.DomainErrorKind
+import io.github.tuguzt.mirea.todolist.viewmodel.MessageState
+import io.github.tuguzt.mirea.todolist.viewmodel.UserMessage
+import io.github.tuguzt.mirea.todolist.viewmodel.kind
 import kotlinx.coroutines.launch
+import mu.KotlinLogging
+import java.util.*
 import javax.inject.Inject
 
 @HiltViewModel
@@ -24,16 +30,25 @@ class ProjectViewModel @Inject constructor(
     private val reopenTask: ReopenTask,
     private val deleteProject: DeleteProject,
 ) : ViewModel() {
+    companion object {
+        private val logger = KotlinLogging.logger {}
+    }
+
     private var _state by mutableStateOf(ProjectScreenState())
     val state get() = _state
 
     fun setup(projectId: String) {
         viewModelScope.launch {
-            when (val result = projectById.projectById(projectId)) {
-                is Result.Error -> throw result.error
+            _state = when (val result = projectById.projectById(projectId)) {
+                is Result.Error -> {
+                    logger.error(result.error) { "Unexpected error" }
+                    val message = UserMessage(result.error.kind())
+                    val userMessages = state.userMessages + message
+                    state.copy(userMessages = userMessages)
+                }
                 is Result.Success -> {
                     val project = checkNotNull(result.data)
-                    _state = state.copy(project = project, loading = false)
+                    state.copy(project = project, loading = false)
                 }
             }
         }
@@ -52,10 +67,20 @@ class ProjectViewModel @Inject constructor(
         _state = state.copy(loading = true)
         viewModelScope.launch {
             when (val result = deleteProject.deleteProject(project.id)) {
-                is Result.Error -> throw result.error
+                is Result.Error -> {
+                    logger.error(result.error) { "Unexpected error" }
+                    val message = UserMessage(result.error.kind())
+                    val userMessages = state.userMessages + message
+                    _state = state.copy(userMessages = userMessages)
+                }
                 is Result.Success -> Unit
             }
         }
+    }
+
+    fun userMessageShown(messageId: UUID) {
+        val messages = state.userMessages.filterNot { it.id == messageId }
+        _state = state.copy(userMessages = messages)
     }
 
     private fun closeTask(task: Task) {
@@ -63,7 +88,12 @@ class ProjectViewModel @Inject constructor(
         _state = state.copy(loading = true)
         viewModelScope.launch {
             when (val result = closeTask.closeTask(task.id)) {
-                is Result.Error -> throw result.error
+                is Result.Error -> {
+                    logger.error(result.error) { "Unexpected error" }
+                    val message = UserMessage(result.error.kind())
+                    val userMessages = state.userMessages + message
+                    _state = state.copy(userMessages = userMessages)
+                }
                 is Result.Success -> setup(project.id)
             }
         }
@@ -74,7 +104,12 @@ class ProjectViewModel @Inject constructor(
         _state = state.copy(loading = true)
         viewModelScope.launch {
             when (val result = reopenTask.reopenTask(task.id)) {
-                is Result.Error -> throw result.error
+                is Result.Error -> {
+                    logger.error(result.error) { "Unexpected error" }
+                    val message = UserMessage(result.error.kind())
+                    val userMessages = state.userMessages + message
+                    _state = state.copy(userMessages = userMessages)
+                }
                 is Result.Success -> setup(project.id)
             }
         }
@@ -85,4 +120,5 @@ class ProjectViewModel @Inject constructor(
 data class ProjectScreenState(
     val project: Project? = null,
     val loading: Boolean = true,
-)
+    override val userMessages: List<UserMessage<DomainErrorKind>> = listOf(),
+) : MessageState<DomainErrorKind>

@@ -32,6 +32,7 @@ fun TaskScreen(
     onTaskCompletion: () -> Unit = {},
     onDeleteTask: () -> Unit = {},
     onNavigateUp: (() -> Unit)? = null,
+    snackbarHostState: SnackbarHostState? = null,
 ) {
     val context = LocalContext.current
     val dateFormat = DateFormat.getLongDateFormat(context)
@@ -107,6 +108,11 @@ fun TaskScreen(
                         style = MaterialTheme.typography.titleMedium,
                     )
                 }
+            }
+        },
+        snackbarHost = {
+            snackbarHostState?.let {
+                SnackbarHost(hostState = it)
             }
         },
     ) { padding ->

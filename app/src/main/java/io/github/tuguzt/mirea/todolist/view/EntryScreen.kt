@@ -1,10 +1,13 @@
 package io.github.tuguzt.mirea.todolist.view
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -13,6 +16,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
+import io.github.tuguzt.mirea.todolist.R
 import io.github.tuguzt.mirea.todolist.view.project.AddNewProjectScreen
 import io.github.tuguzt.mirea.todolist.view.project.ProjectScreen
 import io.github.tuguzt.mirea.todolist.view.task.AddNewTaskScreen
@@ -29,6 +33,9 @@ fun EntryScreen(
     mainViewModel: MainScreenViewModel = viewModel(),
     navController: NavHostController = rememberNavController(),
 ) {
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+
     Surface(color = MaterialTheme.colorScheme.background) {
         NavHost(navController = navController, startDestination = "main") {
             composable(route = "main") {
@@ -40,6 +47,7 @@ fun EntryScreen(
                     onAddNewProjectClick = {
                         navController.navigate(route = "addNewProject")
                     },
+                    snackbarHostState = snackbarHostState,
                 )
             }
             composable(route = "project/{id}") { backStackEntry ->
@@ -68,7 +76,18 @@ fun EntryScreen(
                             navController.navigateUp()
                         },
                         onNavigateUp = navController::navigateUp,
+                        snackbarHostState = snackbarHostState,
                     )
+                }
+
+                viewModel.state.userMessages.firstOrNull()?.let { message ->
+                    LaunchedEffect(message) {
+                        snackbarHostState.showSnackbar(
+                            message = message.kind.name,
+                            actionLabel = context.getString(R.string.dismiss),
+                        )
+                        viewModel.userMessageShown(message.id)
+                    }
                 }
             }
             dialog(route = "addNewProject") {
@@ -83,6 +102,16 @@ fun EntryScreen(
                         navController.navigateUp()
                     },
                 )
+
+                viewModel.state.userMessages.firstOrNull()?.let { message ->
+                    LaunchedEffect(message) {
+                        snackbarHostState.showSnackbar(
+                            message = message.kind.name,
+                            actionLabel = context.getString(R.string.dismiss),
+                        )
+                        viewModel.userMessageShown(message.id)
+                    }
+                }
             }
             composable(route = "task/{taskId}") { backStackEntry ->
                 val viewModel: TaskViewModel = hiltViewModel()
@@ -100,7 +129,18 @@ fun EntryScreen(
                             navController.navigateUp()
                         },
                         onNavigateUp = navController::navigateUp,
+                        snackbarHostState = snackbarHostState,
                     )
+                }
+
+                viewModel.state.userMessages.firstOrNull()?.let { message ->
+                    LaunchedEffect(message) {
+                        snackbarHostState.showSnackbar(
+                            message = message.kind.name,
+                            actionLabel = context.getString(R.string.dismiss),
+                        )
+                        viewModel.userMessageShown(message.id)
+                    }
                 }
             }
             dialog(
@@ -124,7 +164,27 @@ fun EntryScreen(
                         navController.navigateUp()
                     },
                 )
+
+                viewModel.state.userMessages.firstOrNull()?.let { message ->
+                    LaunchedEffect(message) {
+                        snackbarHostState.showSnackbar(
+                            message = message.kind.name,
+                            actionLabel = context.getString(R.string.dismiss),
+                        )
+                        viewModel.userMessageShown(message.id)
+                    }
+                }
             }
+        }
+    }
+
+    mainViewModel.state.userMessages.firstOrNull()?.let { message ->
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(
+                message = message.kind.name,
+                actionLabel = context.getString(R.string.dismiss),
+            )
+            mainViewModel.userMessageShown(message.id)
         }
     }
 }
