@@ -11,7 +11,7 @@ import io.objectbox.android.Admin
 import io.objectbox.kotlin.boxFor
 
 public class DatabaseClient(context: Context) {
-    private val store: BoxStore = MyObjectBox.builder()
+    internal val boxStore: BoxStore = MyObjectBox.builder()
         .androidContext(context)
         .build()
         .apply {
@@ -21,7 +21,7 @@ public class DatabaseClient(context: Context) {
             }
         }
 
-    internal val projectBox: Box<ProjectEntity> = store.boxFor()
+    internal val projectBox: Box<ProjectEntity> = boxStore.boxFor()
 
-    internal val taskBox: Box<TaskEntity> = store.boxFor()
+    internal val taskBox: Box<TaskEntity> = boxStore.boxFor()
 }

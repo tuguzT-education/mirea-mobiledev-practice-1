@@ -10,148 +10,166 @@ import io.github.tuguzt.mirea.todolist.domain.DomainResult
 import io.github.tuguzt.mirea.todolist.domain.error
 import io.github.tuguzt.mirea.todolist.domain.model.*
 import io.github.tuguzt.mirea.todolist.domain.success
+import io.objectbox.kotlin.awaitCallInTx
 import io.objectbox.kotlin.query
 import io.objectbox.query.QueryBuilder
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 
-public class LocalTaskDataSource(client: DatabaseClient) : TaskDataSource {
-    private val projectBox = client.projectBox
-    private val taskBox = client.taskBox
+public class LocalTaskDataSource(private val client: DatabaseClient) : TaskDataSource {
+    override suspend fun getAll(project: Id<Project>): DomainResult<List<Task>> {
+        val all = client.boxStore.awaitCallInTx { client.taskBox.all }!!
+            .filter { task -> task.project.target?.uid == project.value }
+            .map(TaskEntity::toDomain)
+        return success(all)
+    }
 
-    override suspend fun getAll(project: Id<Project>): DomainResult<List<Task>> =
-        withContext(Dispatchers.IO) {
-            val data = taskBox.all
-                .filter { task -> task.project.target?.uid == project.value }
-                .map(TaskEntity::toDomain)
-            success(data)
+    override suspend fun findById(id: Id<Task>): DomainResult<Task?> {
+        val entity = client.boxStore.awaitCallInTx {
+            val query = client.taskBox.query {
+                val stringOrder = QueryBuilder.StringOrder.CASE_SENSITIVE
+                equal(TaskEntity_.uid, id.value, stringOrder)
+            }
+            query.findUnique()
         }
+        return success(entity?.toDomain())
+    }
 
-    override suspend fun findById(id: Id<Task>): DomainResult<Task?> =
-        withContext(Dispatchers.IO) {
-            val query = taskBox.query {
+    override suspend fun create(create: CreateTask): DomainResult<Task> {
+        val entity = client.boxStore.awaitCallInTx {
+            val projectQuery = client.projectBox.query {
+                val stringOrder = QueryBuilder.StringOrder.CASE_SENSITIVE
+                equal(ProjectEntity_.uid, create.project.value, stringOrder)
+            }
+            val project = projectQuery.findUnique()
+            project?.let {
+                val entity = TaskEntity(
+                    name = create.name,
+                    content = create.content,
+                    createdAt = Clock.System.now().toEpochMilliseconds(),
+                )
+                entity.project.target = it
+                val id = client.taskBox.put(entity)
+                entity.uid = id.toString()
+                client.taskBox.put(entity)
+                entity
+            }
+        } ?: kotlin.run {
+            val error = DomainError.StorageError(
+                message = "Project was not found by id ${create.project}",
+                cause = null,
+            )
+            return error(error)
+        }
+        return success(entity.toDomain())
+    }
+
+    public suspend fun save(project: Id<Project>, task: Task): DomainResult<Task> {
+        val entity = client.boxStore.awaitCallInTx {
+            val projectQuery = client.projectBox.query {
+                val stringOrder = QueryBuilder.StringOrder.CASE_SENSITIVE
+                equal(ProjectEntity_.uid, project.value, stringOrder)
+            }
+            val projectEntity = projectQuery.findUnique()
+            projectEntity?.let {
+                val query = client.taskBox.query {
+                    val stringOrder = QueryBuilder.StringOrder.CASE_SENSITIVE
+                    equal(TaskEntity_.uid, task.id.value, stringOrder)
+                }
+                val entity = query.findUnique()?.apply {
+                    name = task.name
+                    content = task.content
+                    completed = task.completed
+                    createdAt = task.createdAt.toEpochMilliseconds()
+                } ?: TaskEntity(
+                    uid = task.id.value,
+                    name = task.name,
+                    content = task.content,
+                    completed = task.completed,
+                    createdAt = task.createdAt.toEpochMilliseconds(),
+                )
+                entity.project.target = projectEntity
+                entity.due.target = task.due?.let { due ->
+                    TaskDueEntity(
+                        string = due.string,
+                        datetime = due.datetime.toEpochMilliseconds(),
+                    )
+                }
+                client.taskBox.put(entity)
+                entity
+            }
+        } ?: kotlin.run {
+            val error = DomainError.StorageError(
+                message = "Project was not found by id $project",
+                cause = null,
+            )
+            return error(error)
+        }
+        return success(entity.toDomain())
+    }
+
+    override suspend fun update(id: Id<Task>, update: UpdateTask): DomainResult<Task> {
+        val entity = client.boxStore.awaitCallInTx {
+            val query = client.taskBox.query {
                 val stringOrder = QueryBuilder.StringOrder.CASE_SENSITIVE
                 equal(TaskEntity_.uid, id.value, stringOrder)
             }
             val entity = query.findUnique()
-            success(entity?.toDomain())
-        }
-
-    override suspend fun create(create: CreateTask): DomainResult<Task> =
-        withContext(Dispatchers.IO) {
-            val projectQuery = projectBox.query {
-                val stringOrder = QueryBuilder.StringOrder.CASE_SENSITIVE
-                equal(ProjectEntity_.uid, create.project.value, stringOrder)
-            }
-            val project = projectQuery.findUnique() ?: kotlin.run {
-                val error = DomainError.StorageError(
-                    message = "Project was not found by id ${create.project}",
-                    cause = null,
-                )
-                return@withContext error(error)
-            }
-            var entity = TaskEntity(
-                name = create.name,
-                content = create.content,
-                createdAt = Clock.System.now().toEpochMilliseconds(),
-            )
-            entity.project.target = project
-            val id = taskBox.put(entity)
-
-            entity = taskBox[id]
-            entity.uid = id.toString()
-            taskBox.put(entity)
-            success(entity.toDomain())
-        }
-
-    public suspend fun save(project: Id<Project>, task: Task): DomainResult<Task> =
-        withContext(Dispatchers.IO) {
-            val projectQuery = projectBox.query {
-                val stringOrder = QueryBuilder.StringOrder.CASE_SENSITIVE
-                equal(ProjectEntity_.uid, project.value, stringOrder)
-            }
-            val projectEntity = projectQuery.findUnique() ?: kotlin.run {
-                val error = DomainError.StorageError(
-                    message = "Project was not found by id $project",
-                    cause = null,
-                )
-                return@withContext error(error)
-            }
-            val query = taskBox.query {
-                val stringOrder = QueryBuilder.StringOrder.CASE_SENSITIVE
-                equal(TaskEntity_.uid, task.id.value, stringOrder)
-            }
-            val entity = query.findUnique() ?: TaskEntity(
-                uid = task.id.value,
-                name = task.name,
-                content = task.content,
-                completed = task.completed,
-                createdAt = task.createdAt.toEpochMilliseconds(),
-            )
-            entity.project.target = projectEntity
-            entity.due.target = task.due?.let { due ->
-                TaskDueEntity(string = due.string, datetime = due.datetime.toEpochMilliseconds())
-            }
-            taskBox.put(entity)
-            success(entity.toDomain())
-        }
-
-    override suspend fun update(id: Id<Task>, update: UpdateTask): DomainResult<Task> =
-        withContext(Dispatchers.IO) {
-            val query = taskBox.query {
-                val stringOrder = QueryBuilder.StringOrder.CASE_SENSITIVE
-                equal(TaskEntity_.uid, id.value, stringOrder)
-            }
-            val entity = query.findUnique() ?: kotlin.run {
-                val error = DomainError.StorageError(
-                    message = "Task was not found by id $id",
-                    cause = null,
-                )
-                return@withContext error(error)
-            }
-            update.name?.let { name ->
-                entity.name = name
-            }
-            update.content?.let { content ->
-                entity.content = content
-            }
-            update.completed?.let { completed ->
-                entity.completed = completed
-            }
-            update.due?.let { due ->
-                if (due.hasUpdates()) {
-                    val dueEntity = entity.due.target ?: TaskDueEntity()
-                    due.string?.let { string ->
-                        dueEntity.string = string
-                    }
-                    due.datetime?.let { datetime ->
-                        dueEntity.datetime = datetime.toEpochMilliseconds()
-                    }
-                    entity.due.target = dueEntity
+            entity?.let {
+                update.name?.let { name ->
+                    it.name = name
                 }
+                update.content?.let { content ->
+                    it.content = content
+                }
+                update.completed?.let { completed ->
+                    it.completed = completed
+                }
+                update.due?.let { due ->
+                    if (due.hasUpdates()) {
+                        val dueEntity = it.due.target ?: TaskDueEntity()
+                        due.string?.let { string ->
+                            dueEntity.string = string
+                        }
+                        due.datetime?.let { datetime ->
+                            dueEntity.datetime = datetime.toEpochMilliseconds()
+                        }
+                        it.due.target = dueEntity
+                    }
+                }
+                client.taskBox.put(it)
+                it
             }
-            taskBox.put(entity)
-            success(entity.toDomain())
+        } ?: kotlin.run {
+            val error = DomainError.StorageError(
+                message = "Task was not found by id $id",
+                cause = null,
+            )
+            return error(error)
         }
+        return success(entity.toDomain())
+    }
 
-    override suspend fun delete(id: Id<Task>): DomainResult<Unit> =
-        withContext(Dispatchers.IO) {
-            val query = taskBox.query {
+    override suspend fun delete(id: Id<Task>): DomainResult<Unit> {
+        client.boxStore.awaitCallInTx {
+            val query = client.taskBox.query {
                 val stringOrder = QueryBuilder.StringOrder.CASE_SENSITIVE
                 equal(TaskEntity_.uid, id.value, stringOrder)
             }
-            val entity = query.findUnique() ?: kotlin.run {
-                val error = DomainError.StorageError(
-                    message = "Task was not found by id $id",
-                    cause = null,
-                )
-                return@withContext error(error)
+            val entity = query.findUnique()
+            entity?.let {
+                client.taskBox.remove(it)
+                it
             }
-            taskBox.remove(entity)
-            success(Unit)
+        } ?: kotlin.run {
+            val error = DomainError.StorageError(
+                message = "Task was not found by id $id",
+                cause = null,
+            )
+            return error(error)
         }
+        return success(Unit)
+    }
 }
 
 internal fun TaskEntity.toDomain(): Task = Task(

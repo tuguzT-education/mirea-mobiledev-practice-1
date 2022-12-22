@@ -12,86 +12,95 @@ import io.github.tuguzt.mirea.todolist.domain.model.Id
 import io.github.tuguzt.mirea.todolist.domain.model.Project
 import io.github.tuguzt.mirea.todolist.domain.model.UpdateProject
 import io.github.tuguzt.mirea.todolist.domain.success
+import io.objectbox.kotlin.awaitCallInTx
 import io.objectbox.kotlin.query
 import io.objectbox.query.QueryBuilder
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
-public class LocalProjectDataSource(client: DatabaseClient) : ProjectDataSource {
-    private val projectBox = client.projectBox
+public class LocalProjectDataSource(private val client: DatabaseClient) : ProjectDataSource {
+    override suspend fun getAll(): DomainResult<List<Project>> {
+        val all = client.boxStore.awaitCallInTx { client.projectBox.all }!!
+            .map(ProjectEntity::toDomain)
+        return success(all)
+    }
 
-    override suspend fun getAll(): DomainResult<List<Project>> =
-        withContext(Dispatchers.IO) {
-            success(projectBox.all.map(ProjectEntity::toDomain))
-        }
-
-    override suspend fun findById(id: Id<Project>): DomainResult<Project?> =
-        withContext(Dispatchers.IO) {
-            val query = projectBox.query {
+    override suspend fun findById(id: Id<Project>): DomainResult<Project?> {
+        val entity = client.boxStore.awaitCallInTx {
+            val query = client.projectBox.query {
                 val stringOrder = QueryBuilder.StringOrder.CASE_SENSITIVE
                 equal(ProjectEntity_.uid, id.value, stringOrder)
             }
-            val entity = query.findUnique()
-            success(entity?.toDomain())
+            query.findUnique()
         }
+        return success(entity?.toDomain())
+    }
 
-    override suspend fun create(create: CreateProject): DomainResult<Project> =
-        withContext(Dispatchers.IO) {
-            var entity = ProjectEntity(name = create.name)
-            val id = projectBox.put(entity)
-
-            entity = projectBox[id]
+    override suspend fun create(create: CreateProject): DomainResult<Project> {
+        val entity = client.boxStore.awaitCallInTx {
+            val entity = ProjectEntity(name = create.name)
+            val id = client.projectBox.put(entity)
             entity.uid = id.toString()
-            projectBox.put(entity)
-            success(entity.toDomain())
-        }
+            client.projectBox.put(entity)
+            entity
+        }!!
+        return success(entity.toDomain())
+    }
 
-    public suspend fun save(project: Project): DomainResult<Project> =
-        withContext(Dispatchers.IO) {
-            val query = projectBox.query {
+    public suspend fun save(project: Project): DomainResult<Project> {
+        val entity = client.boxStore.awaitCallInTx {
+            val query = client.projectBox.query {
                 val stringOrder = QueryBuilder.StringOrder.CASE_SENSITIVE
                 equal(ProjectEntity_.uid, project.id.value, stringOrder)
             }
-            val entity = query.findUnique()
+            val entity = query.findUnique()?.apply { name = project.name }
                 ?: ProjectEntity(uid = project.id.value, name = project.name)
-            projectBox.put(entity)
-            success(entity.toDomain())
-        }
+            client.projectBox.put(entity)
+            entity
+        }!!
+        return success(entity.toDomain())
+    }
 
-    override suspend fun update(id: Id<Project>, update: UpdateProject): DomainResult<Project> =
-        withContext(Dispatchers.IO) {
-            val query = projectBox.query {
+    override suspend fun update(id: Id<Project>, update: UpdateProject): DomainResult<Project> {
+        val entity = client.boxStore.awaitCallInTx {
+            val query = client.projectBox.query {
                 val stringOrder = QueryBuilder.StringOrder.CASE_SENSITIVE
                 equal(ProjectEntity_.uid, id.value, stringOrder)
             }
-            val entity = query.findUnique() ?: kotlin.run {
-                val error = DomainError.StorageError(
-                    message = "Project was not found by id $id",
-                    cause = null,
-                )
-                return@withContext error(error)
+            val entity = query.findUnique()
+            entity?.let {
+                it.name = update.name
+                client.projectBox.put(it)
+                it
             }
-            entity.name = update.name
-            projectBox.put(entity)
-            success(entity.toDomain())
+        } ?: kotlin.run {
+            val error = DomainError.StorageError(
+                message = "Project was not found by id $id",
+                cause = null,
+            )
+            return error(error)
         }
+        return success(entity.toDomain())
+    }
 
-    override suspend fun delete(id: Id<Project>): DomainResult<Unit> =
-        withContext(Dispatchers.IO) {
-            val query = projectBox.query {
+    override suspend fun delete(id: Id<Project>): DomainResult<Unit> {
+        client.boxStore.awaitCallInTx {
+            val query = client.projectBox.query {
                 val stringOrder = QueryBuilder.StringOrder.CASE_SENSITIVE
                 equal(ProjectEntity_.uid, id.value, stringOrder)
             }
-            val entity = query.findUnique() ?: kotlin.run {
-                val error = DomainError.StorageError(
-                    message = "Project was not found by id $id",
-                    cause = null,
-                )
-                return@withContext error(error)
+            val entity = query.findUnique()
+            entity?.let {
+                client.projectBox.remove(it)
+                it
             }
-            projectBox.remove(entity)
-            success(Unit)
+        } ?: kotlin.run {
+            val error = DomainError.StorageError(
+                message = "Project was not found by id $id",
+                cause = null,
+            )
+            return error(error)
         }
+        return success(Unit)
+    }
 }
 
 internal fun ProjectEntity.toDomain(): Project = Project(
