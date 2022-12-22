@@ -46,7 +46,7 @@ dependencies {
     implementation("com.github.haroldadmin:NetworkResponseAdapter:5.0.0")
     implementation("io.objectbox:objectbox-kotlin:3.5.0")
     implementation("org.slf4j:slf4j-android:1.7.36")
-    implementation("io.github.microutils:kotlin-logging-jvm:2.1.23")
+    implementation("io.github.microutils:kotlin-logging-jvm:3.0.4")
     debugImplementation("io.objectbox:objectbox-android-objectbrowser:3.5.0")
     releaseImplementation("io.objectbox:objectbox-android:3.5.0")
 

@@ -64,6 +64,7 @@ dependencies {
     implementation(project(":data"))
 
     implementation("androidx.core:core-ktx:1.9.0")
+    implementation("androidx.core:core-splashscreen:1.0.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.5.1")
     implementation("androidx.activity:activity-compose:1.6.1")
     implementation("androidx.compose.ui:ui:$composeVersion")
@@ -79,7 +80,7 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.44")
     kapt("com.google.dagger:hilt-android-compiler:2.44")
     implementation("org.slf4j:slf4j-android:1.7.36")
-    implementation("io.github.microutils:kotlin-logging-jvm:2.1.23")
+    implementation("io.github.microutils:kotlin-logging-jvm:3.0.4")
 
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.2.2")
 
