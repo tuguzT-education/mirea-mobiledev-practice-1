@@ -6,6 +6,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.create
 
@@ -16,7 +17,10 @@ public class ApiClient {
 
         const val apiToken = "SECRET"
 
-        val okHttpClient: OkHttpClient = OkHttpClient.Builder()
+        val interceptor: HttpLoggingInterceptor = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
+        val client: OkHttpClient = OkHttpClient.Builder()
             .addInterceptor { chain ->
                 val request = chain
                     .request()
@@ -25,12 +29,13 @@ public class ApiClient {
                     .build()
                 chain.proceed(request)
             }
+            .addInterceptor(interceptor)
             .build()
     }
 
     private val retrofit: Retrofit = Retrofit.Builder()
         .baseUrl("https://api.todoist.com/rest/v2/")
-        .client(okHttpClient)
+        .client(client)
         .addConverterFactory(converterFactory)
         .addCallAdapterFactory(NetworkResponseAdapterFactory())
         .build()
