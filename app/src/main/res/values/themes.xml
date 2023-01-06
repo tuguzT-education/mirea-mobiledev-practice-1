@@ -10,5 +10,6 @@
 
     <style name="Theme.ToDoList" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/splash</item>
+        <item name="android:windowTranslucentStatus">true</item>
     </style>
 </resources>

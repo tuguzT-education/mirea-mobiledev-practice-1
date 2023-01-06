@@ -28,20 +28,22 @@ class MainScreenViewModel @Inject constructor(
     val state get() = _state
 
     init {
-        update()
+        refresh()
     }
 
-    fun update() {
+    fun refresh() {
+        _state = state.copy(isRefreshing = true)
         viewModelScope.launch {
             _state = when (val result = allProjects.allProjects()) {
                 is Result.Error -> {
                     logger.error(result.error) { "Unexpected error" }
                     val message = UserMessage(result.error.kind())
                     val userMessages = state.userMessages + message
-                    state.copy(userMessages = userMessages)
+                    state.copy(isRefreshing = false, userMessages = userMessages)
                 }
                 is Result.Success -> {
-                    state.copy(projects = result.data)
+                    logger.debug { "Successful refreshing" }
+                    state.copy(isRefreshing = false, projects = result.data)
                 }
             }
         }
@@ -56,6 +58,7 @@ class MainScreenViewModel @Inject constructor(
 @Immutable
 data class MainScreenState(
     val projects: List<Project> = listOf(),
+    val isRefreshing: Boolean = true,
     override val userMessages: List<UserMessage<DomainErrorKind>> = listOf(),
 ) : MessageState<DomainErrorKind>
 

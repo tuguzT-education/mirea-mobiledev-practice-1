@@ -1,5 +1,7 @@
 package io.github.tuguzt.mirea.todolist.view
 
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -30,7 +32,7 @@ import io.github.tuguzt.mirea.todolist.viewmodel.project.ProjectViewModel
 import io.github.tuguzt.mirea.todolist.viewmodel.task.AddNewTaskViewModel
 import io.github.tuguzt.mirea.todolist.viewmodel.task.TaskViewModel
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterialApi::class)
 @Composable
 fun EntryScreen(
     mainViewModel: MainScreenViewModel = viewModel(),
@@ -42,6 +44,10 @@ fun EntryScreen(
     Surface(color = MaterialTheme.colorScheme.background) {
         NavHost(navController = navController, startDestination = "main") {
             composable(route = "main") {
+                val pullRefreshState = rememberPullRefreshState(
+                    refreshing = mainViewModel.state.isRefreshing,
+                    onRefresh = mainViewModel::refresh,
+                )
                 MainScreen(
                     state = mainViewModel.state,
                     onProjectClick = { project ->
@@ -51,6 +57,7 @@ fun EntryScreen(
                         navController.navigate(route = "addNewProject")
                     },
                     snackbarHostState = snackbarHostState,
+                    pullRefreshState = pullRefreshState,
                 )
             }
             composable(route = "project/{id}") { backStackEntry ->
@@ -76,7 +83,7 @@ fun EntryScreen(
                         onTaskCheckboxClick = viewModel::changeTaskCompletion,
                         onDeleteProject = {
                             viewModel.deleteProject()
-                            mainViewModel.update()
+                            mainViewModel.refresh()
                             navController.navigateUp()
                         },
                         onNavigateUp = navController::navigateUp,
@@ -102,7 +109,7 @@ fun EntryScreen(
                     addEnabled = viewModel.canAdd(),
                     onAdd = {
                         viewModel.addNewProject()
-                        mainViewModel.update()
+                        mainViewModel.refresh()
                         navController.navigateUp()
                     },
                 )

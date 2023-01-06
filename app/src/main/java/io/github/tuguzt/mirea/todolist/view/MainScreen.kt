@@ -1,17 +1,19 @@
 package io.github.tuguzt.mirea.todolist.view
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.PullRefreshState
+import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -27,13 +29,14 @@ import io.github.tuguzt.mirea.todolist.viewmodel.MainScreenState
 import io.github.tuguzt.mirea.todolist.viewmodel.completedProjects
 import io.github.tuguzt.mirea.todolist.viewmodel.todoProjects
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun MainScreen(
     state: MainScreenState,
     onProjectClick: (Project) -> Unit,
     onAddNewProjectClick: () -> Unit,
     snackbarHostState: SnackbarHostState? = null,
+    pullRefreshState: PullRefreshState? = null,
 ) {
     Scaffold(
         topBar = {
@@ -55,13 +58,23 @@ fun MainScreen(
             }
         },
     ) { padding ->
-        ProjectList(
-            state = state,
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize(),
-            onProjectClick = onProjectClick,
-        )
+        Box(
+            modifier = (pullRefreshState?.let { Modifier.pullRefresh(it) } ?: Modifier)
+                .padding(padding),
+        ) {
+            ProjectList(
+                state = state,
+                modifier = Modifier.fillMaxSize(),
+                onProjectClick = onProjectClick,
+            )
+            pullRefreshState?.let {
+                PullRefreshIndicator(
+                    refreshing = state.isRefreshing,
+                    state = it,
+                    modifier = Modifier.align(Alignment.TopCenter),
+                )
+            }
+        }
     }
 }
 
@@ -109,8 +122,7 @@ private fun LazyListScope.projectGroup(
                 text = header,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(4.dp)
-                    .padding(start = 16.dp),
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
             )
         }
     }
