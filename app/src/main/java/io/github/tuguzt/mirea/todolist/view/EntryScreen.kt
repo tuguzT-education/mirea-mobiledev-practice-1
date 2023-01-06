@@ -68,28 +68,31 @@ fun EntryScreen(
                     viewModel.setup(id)
                 }
 
-                if (!viewModel.state.loading) {
-                    ProjectScreen(
-                        project = checkNotNull(viewModel.state.project),
-                        onAddNewTask = {
-                            navController.navigate(route = "project/$projectId/addNewTask")
-                        },
-                        onTaskClick = { task ->
-                            navController.navigate(route = "task/${task.id}")
-                        },
-                        onTaskDueClick = {
-                            // TODO change due of the task
-                        },
-                        onTaskCheckboxClick = viewModel::changeTaskCompletion,
-                        onDeleteProject = {
-                            viewModel.deleteProject()
-                            mainViewModel.refresh()
-                            navController.navigateUp()
-                        },
-                        onNavigateUp = navController::navigateUp,
-                        snackbarHostState = snackbarHostState,
-                    )
-                }
+                val pullRefreshState = rememberPullRefreshState(
+                    refreshing = viewModel.state.isRefreshing,
+                    onRefresh = viewModel::refresh,
+                )
+                ProjectScreen(
+                    state = viewModel.state,
+                    onAddNewTask = {
+                        navController.navigate(route = "project/$projectId/addNewTask")
+                    },
+                    onTaskClick = { task ->
+                        navController.navigate(route = "task/${task.id}")
+                    },
+                    onTaskDueClick = {
+                        // TODO change due of the task
+                    },
+                    onTaskCheckboxClick = viewModel::changeTaskCompletion,
+                    onDeleteProject = {
+                        viewModel.deleteProject()
+                        mainViewModel.refresh()
+                        navController.navigateUp()
+                    },
+                    onNavigateUp = navController::navigateUp,
+                    snackbarHostState = snackbarHostState,
+                    pullRefreshState = pullRefreshState,
+                )
 
                 viewModel.state.userMessages.firstOrNull()?.let { message ->
                     LaunchedEffect(message) {
@@ -132,18 +135,21 @@ fun EntryScreen(
                     viewModel.setup(id)
                 }
 
-                if (!viewModel.state.loading) {
-                    TaskScreen(
-                        task = checkNotNull(viewModel.state.task),
-                        onTaskCompletion = viewModel::changeTaskCompletion,
-                        onDeleteTask = {
-                            viewModel.deleteTask()
-                            navController.navigateUp()
-                        },
-                        onNavigateUp = navController::navigateUp,
-                        snackbarHostState = snackbarHostState,
-                    )
-                }
+                val pullRefreshState = rememberPullRefreshState(
+                    refreshing = viewModel.state.isRefreshing,
+                    onRefresh = viewModel::refresh,
+                )
+                TaskScreen(
+                    state = viewModel.state,
+                    onTaskCompletion = viewModel::changeTaskCompletion,
+                    onDeleteTask = {
+                        viewModel.deleteTask()
+                        navController.navigateUp()
+                    },
+                    onNavigateUp = navController::navigateUp,
+                    snackbarHostState = snackbarHostState,
+                    pullRefreshState = pullRefreshState,
+                )
 
                 viewModel.state.userMessages.firstOrNull()?.let { message ->
                     LaunchedEffect(message) {

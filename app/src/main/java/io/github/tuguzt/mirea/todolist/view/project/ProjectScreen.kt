@@ -3,12 +3,17 @@ package io.github.tuguzt.mirea.todolist.view.project
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.PullRefreshState
+import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -21,12 +26,13 @@ import io.github.tuguzt.mirea.todolist.domain.model.Project
 import io.github.tuguzt.mirea.todolist.domain.model.Task
 import io.github.tuguzt.mirea.todolist.view.task.TaskCard
 import io.github.tuguzt.mirea.todolist.view.theme.ToDoListTheme
+import io.github.tuguzt.mirea.todolist.viewmodel.project.ProjectScreenState
 import kotlinx.datetime.Clock
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun ProjectScreen(
-    project: Project,
+    state: ProjectScreenState,
     onAddNewTask: () -> Unit = {},
     onTaskClick: (Task) -> Unit = {},
     onTaskDueClick: (Task) -> Unit = {},
@@ -34,7 +40,10 @@ fun ProjectScreen(
     onDeleteProject: () -> Unit = {},
     onNavigateUp: (() -> Unit)? = null,
     snackbarHostState: SnackbarHostState? = null,
+    pullRefreshState: PullRefreshState? = null,
 ) {
+    val project = state.project ?: return
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -79,26 +88,37 @@ fun ProjectScreen(
             }
         },
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+        Box(
+            modifier = (pullRefreshState?.let { Modifier.pullRefresh(it) } ?: Modifier)
+                .padding(padding),
         ) {
-            items(project.tasks, key = { it.id.value }) { task ->
-                TaskCard(
-                    task = task,
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = { onTaskClick(task) },
-                    onDueClick = { onTaskDueClick(task) },
-                    onCheckboxClick = { onTaskCheckboxClick(task) },
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                items(project.tasks, key = { it.id.value }) { task ->
+                    TaskCard(
+                        task = task,
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { onTaskClick(task) },
+                        onDueClick = { onTaskDueClick(task) },
+                        onCheckboxClick = { onTaskCheckboxClick(task) },
+                    )
+                }
+            }
+            pullRefreshState?.let {
+                PullRefreshIndicator(
+                    refreshing = state.isRefreshing,
+                    state = it,
+                    modifier = Modifier.align(Alignment.TopCenter),
                 )
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Preview
 @Composable
 private fun ProjectScreen() {
@@ -126,7 +146,8 @@ private fun ProjectScreen() {
                     ),
                 ),
             )
-            ProjectScreen(project, onNavigateUp = {})
+            val state = ProjectScreenState(project = project, isRefreshing = false)
+            ProjectScreen(state, onNavigateUp = {})
         }
     }
 }
