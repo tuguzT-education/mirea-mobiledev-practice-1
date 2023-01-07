@@ -5,9 +5,7 @@ import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.window.DialogProperties
@@ -44,12 +42,14 @@ fun EntryScreen(
     Surface(color = MaterialTheme.colorScheme.background) {
         NavHost(navController = navController, startDestination = "main") {
             composable(route = "main") {
+                val state by mainViewModel.state.collectAsState()
+
                 val pullRefreshState = rememberPullRefreshState(
-                    refreshing = mainViewModel.state.isRefreshing,
+                    refreshing = state.refreshing,
                     onRefresh = mainViewModel::refresh,
                 )
                 MainScreen(
-                    state = mainViewModel.state,
+                    state = state,
                     onProjectClick = { project ->
                         navController.navigate(route = "project/${project.id}")
                     },
@@ -59,6 +59,16 @@ fun EntryScreen(
                     snackbarHostState = snackbarHostState,
                     pullRefreshState = pullRefreshState,
                 )
+
+                state.userMessages.firstOrNull()?.let { message ->
+                    LaunchedEffect(message) {
+                        snackbarHostState.showSnackbar(
+                            message = message.kind.name,
+                            actionLabel = context.getString(R.string.dismiss),
+                        )
+                        mainViewModel.userMessageShown(message.id)
+                    }
+                }
             }
             composable(route = "project/{id}") { backStackEntry ->
                 val viewModel: ProjectViewModel = hiltViewModel()
@@ -67,13 +77,14 @@ fun EntryScreen(
                     val id = Id<Project>(projectId)
                     viewModel.setup(id)
                 }
+                val state by viewModel.state.collectAsState()
 
                 val pullRefreshState = rememberPullRefreshState(
-                    refreshing = viewModel.state.isRefreshing,
+                    refreshing = state.refreshing,
                     onRefresh = viewModel::refresh,
                 )
                 ProjectScreen(
-                    state = viewModel.state,
+                    state = state,
                     onAddNewTask = {
                         navController.navigate(route = "project/$projectId/addNewTask")
                     },
@@ -94,7 +105,7 @@ fun EntryScreen(
                     pullRefreshState = pullRefreshState,
                 )
 
-                viewModel.state.userMessages.firstOrNull()?.let { message ->
+                state.userMessages.firstOrNull()?.let { message ->
                     LaunchedEffect(message) {
                         snackbarHostState.showSnackbar(
                             message = message.kind.name,
@@ -106,6 +117,7 @@ fun EntryScreen(
             }
             dialog(route = "addNewProject") {
                 val viewModel: AddNewProjectViewModel = hiltViewModel()
+
                 AddNewProjectScreen(
                     projectName = viewModel.projectName,
                     onProjectNameChange = viewModel::projectName::set,
@@ -134,13 +146,14 @@ fun EntryScreen(
                     val id = Id<Task>(taskId)
                     viewModel.setup(id)
                 }
+                val state by viewModel.state.collectAsState()
 
                 val pullRefreshState = rememberPullRefreshState(
-                    refreshing = viewModel.state.isRefreshing,
+                    refreshing = state.refreshing,
                     onRefresh = viewModel::refresh,
                 )
                 TaskScreen(
-                    state = viewModel.state,
+                    state = state,
                     onTaskCompletion = viewModel::changeTaskCompletion,
                     onDeleteTask = {
                         viewModel.deleteTask()
@@ -151,7 +164,7 @@ fun EntryScreen(
                     pullRefreshState = pullRefreshState,
                 )
 
-                viewModel.state.userMessages.firstOrNull()?.let { message ->
+                state.userMessages.firstOrNull()?.let { message ->
                     LaunchedEffect(message) {
                         snackbarHostState.showSnackbar(
                             message = message.kind.name,
@@ -194,16 +207,6 @@ fun EntryScreen(
                     }
                 }
             }
-        }
-    }
-
-    mainViewModel.state.userMessages.firstOrNull()?.let { message ->
-        LaunchedEffect(message) {
-            snackbarHostState.showSnackbar(
-                message = message.kind.name,
-                actionLabel = context.getString(R.string.dismiss),
-            )
-            mainViewModel.userMessageShown(message.id)
         }
     }
 }

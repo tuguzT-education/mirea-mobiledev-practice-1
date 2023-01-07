@@ -1,9 +1,6 @@
 package io.github.tuguzt.mirea.todolist.viewmodel.task
 
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,6 +15,8 @@ import io.github.tuguzt.mirea.todolist.viewmodel.DomainErrorKind
 import io.github.tuguzt.mirea.todolist.viewmodel.MessageState
 import io.github.tuguzt.mirea.todolist.viewmodel.UserMessage
 import io.github.tuguzt.mirea.todolist.viewmodel.kind
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import java.util.*
@@ -30,39 +29,42 @@ class TaskViewModel @Inject constructor(
     private val reopenTask: ReopenTask,
     private val deleteTask: DeleteTask,
 ) : ViewModel() {
+
     companion object {
         private val logger = KotlinLogging.logger {}
     }
 
-    private var _state by mutableStateOf(TaskScreenState())
-    val state get() = _state
+    private val _state = MutableStateFlow(TaskScreenState())
+    val state = _state.asStateFlow()
 
     fun setup(id: Id<Task>) {
-        _state = state.copy(isRefreshing = true)
-
         viewModelScope.launch {
-            _state = when (val result = taskById.taskById(id)) {
-                is Result.Error -> {
-                    logger.error(result.error) { "Unexpected error" }
-                    val message = UserMessage(result.error.kind())
-                    val userMessages = state.userMessages + message
-                    state.copy(isRefreshing = false, userMessages = userMessages)
+            _state.emit(value = state.value.copy(refreshing = true))
+
+            _state.emit(
+                value = when (val result = taskById.taskById(id)) {
+                    is Result.Error -> {
+                        logger.error(result.error) { "Unexpected error" }
+                        val message = UserMessage(result.error.kind())
+                        val userMessages = state.value.userMessages + message
+                        state.value.copy(refreshing = false, userMessages = userMessages)
+                    }
+                    is Result.Success -> {
+                        val task = checkNotNull(result.data)
+                        state.value.copy(refreshing = false, task = task)
+                    }
                 }
-                is Result.Success -> {
-                    val task = checkNotNull(result.data)
-                    state.copy(isRefreshing = false, task = task)
-                }
-            }
+            )
         }
     }
 
     fun refresh() {
-        val task = requireNotNull(state.task)
+        val task = requireNotNull(state.value.task)
         setup(task.id)
     }
 
     fun changeTaskCompletion() {
-        val task = checkNotNull(state.task)
+        val task = checkNotNull(state.value.task)
         if (task.completed) {
             reopenTask()
         } else {
@@ -71,68 +73,79 @@ class TaskViewModel @Inject constructor(
     }
 
     fun deleteTask() {
-        val task = checkNotNull(state.task)
-        _state = state.copy(isRefreshing = true)
+        val task = checkNotNull(state.value.task)
 
         viewModelScope.launch {
-            _state = when (val result = deleteTask.deleteTask(task.id)) {
-                is Result.Error -> {
-                    logger.error(result.error) { "Unexpected error" }
-                    val message = UserMessage(result.error.kind())
-                    val userMessages = state.userMessages + message
-                    state.copy(isRefreshing = false, userMessages = userMessages)
+            _state.emit(value = state.value.copy(refreshing = true))
+
+            _state.emit(
+                value = when (val result = deleteTask.deleteTask(task.id)) {
+                    is Result.Error -> {
+                        logger.error(result.error) { "Unexpected error" }
+                        val message = UserMessage(result.error.kind())
+                        val userMessages = state.value.userMessages + message
+                        state.value.copy(refreshing = false, userMessages = userMessages)
+                    }
+                    is Result.Success -> state.value.copy(refreshing = false)
                 }
-                is Result.Success -> state.copy(isRefreshing = false)
-            }
+            )
         }
     }
 
     fun userMessageShown(messageId: UUID) {
-        val messages = state.userMessages.filterNot { it.id == messageId }
-        _state = state.copy(userMessages = messages)
+        viewModelScope.launch {
+            val messages = state.value.userMessages.filterNot { it.id == messageId }
+            _state.emit(value = state.value.copy(userMessages = messages))
+        }
     }
 
     private fun closeTask() {
-        _state = state.copy(isRefreshing = true)
+        val task = checkNotNull(state.value.task)
 
         viewModelScope.launch {
-            val task = checkNotNull(state.task)
-            _state = when (val result = closeTask.closeTask(task.id)) {
-                is Result.Error -> {
-                    logger.error(result.error) { "Unexpected error" }
-                    val message = UserMessage(result.error.kind())
-                    val userMessages = state.userMessages + message
-                    state.copy(isRefreshing = false, userMessages = userMessages)
+            _state.emit(value = state.value.copy(refreshing = true))
+
+            _state.emit(
+                value = when (val result = closeTask.closeTask(task.id)) {
+                    is Result.Error -> {
+                        logger.error(result.error) { "Unexpected error" }
+                        val message = UserMessage(result.error.kind())
+                        val userMessages = state.value.userMessages + message
+                        state.value.copy(refreshing = false, userMessages = userMessages)
+                    }
+                    is Result.Success -> {
+                        state.value.copy(
+                            refreshing = false,
+                            task = task.copy(completed = true),
+                        )
+                    }
                 }
-                is Result.Success -> {
-                    state.copy(
-                        isRefreshing = false,
-                        task = task.copy(completed = true),
-                    )
-                }
-            }
+            )
         }
     }
 
     private fun reopenTask() {
-        _state = state.copy(isRefreshing = true)
+        val task = checkNotNull(state.value.task)
 
         viewModelScope.launch {
-            val task = checkNotNull(state.task)
-            _state = when (val result = reopenTask.reopenTask(task.id)) {
-                is Result.Error -> {
-                    logger.error(result.error) { "Unexpected error" }
-                    val message = UserMessage(result.error.kind())
-                    val userMessages = state.userMessages + message
-                    state.copy(isRefreshing = false, userMessages = userMessages)
+            _state.emit(value = state.value.copy(refreshing = true))
+
+            _state.emit(
+                value = when (val result = reopenTask.reopenTask(task.id)) {
+                    is Result.Error -> {
+                        logger.error(result.error) { "Unexpected error" }
+                        val message = UserMessage(result.error.kind())
+                        val userMessages = state.value.userMessages + message
+                        state.value.copy(refreshing = false, userMessages = userMessages)
+                    }
+                    is Result.Success -> {
+                        state.value.copy(
+                            refreshing = false,
+                            task = task.copy(completed = false),
+                        )
+                    }
                 }
-                is Result.Success -> {
-                    state.copy(
-                        isRefreshing = false,
-                        task = task.copy(completed = false),
-                    )
-                }
-            }
+            )
         }
     }
 }
@@ -140,6 +153,6 @@ class TaskViewModel @Inject constructor(
 @Immutable
 data class TaskScreenState(
     val task: Task? = null,
-    val isRefreshing: Boolean = true,
+    val refreshing: Boolean = true,
     override val userMessages: List<UserMessage<DomainErrorKind>> = listOf(),
 ) : MessageState<DomainErrorKind>

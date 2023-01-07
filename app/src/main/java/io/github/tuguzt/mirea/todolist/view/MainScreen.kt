@@ -26,8 +26,6 @@ import io.github.tuguzt.mirea.todolist.domain.model.Project
 import io.github.tuguzt.mirea.todolist.view.project.ProjectCard
 import io.github.tuguzt.mirea.todolist.view.theme.ToDoListTheme
 import io.github.tuguzt.mirea.todolist.viewmodel.MainScreenState
-import io.github.tuguzt.mirea.todolist.viewmodel.completedProjects
-import io.github.tuguzt.mirea.todolist.viewmodel.todoProjects
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
@@ -69,7 +67,7 @@ fun MainScreen(
             )
             pullRefreshState?.let {
                 PullRefreshIndicator(
-                    refreshing = state.isRefreshing,
+                    refreshing = state.refreshing,
                     state = it,
                     modifier = Modifier.align(Alignment.TopCenter),
                 )

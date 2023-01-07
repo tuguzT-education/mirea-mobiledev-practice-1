@@ -1,9 +1,6 @@
 package io.github.tuguzt.mirea.todolist.viewmodel.project
 
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,6 +16,8 @@ import io.github.tuguzt.mirea.todolist.viewmodel.DomainErrorKind
 import io.github.tuguzt.mirea.todolist.viewmodel.MessageState
 import io.github.tuguzt.mirea.todolist.viewmodel.UserMessage
 import io.github.tuguzt.mirea.todolist.viewmodel.kind
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import java.util.*
@@ -31,34 +30,37 @@ class ProjectViewModel @Inject constructor(
     private val reopenTask: ReopenTask,
     private val deleteProject: DeleteProject,
 ) : ViewModel() {
+
     companion object {
         private val logger = KotlinLogging.logger {}
     }
 
-    private var _state by mutableStateOf(ProjectScreenState())
-    val state get() = _state
+    private val _state = MutableStateFlow(ProjectScreenState())
+    val state = _state.asStateFlow()
 
     fun setup(id: Id<Project>) {
-        _state = state.copy(isRefreshing = true)
-
         viewModelScope.launch {
-            _state = when (val result = projectById.projectById(id)) {
-                is Result.Error -> {
-                    logger.error(result.error) { "Unexpected error" }
-                    val message = UserMessage(result.error.kind())
-                    val userMessages = state.userMessages + message
-                    state.copy(isRefreshing = false, userMessages = userMessages)
+            _state.emit(value = state.value.copy(refreshing = true))
+
+            _state.emit(
+                value = when (val result = projectById.projectById(id)) {
+                    is Result.Error -> {
+                        logger.error(result.error) { "Unexpected error" }
+                        val message = UserMessage(result.error.kind())
+                        val userMessages = state.value.userMessages + message
+                        state.value.copy(refreshing = false, userMessages = userMessages)
+                    }
+                    is Result.Success -> {
+                        val project = checkNotNull(result.data)
+                        state.value.copy(refreshing = false, project = project)
+                    }
                 }
-                is Result.Success -> {
-                    val project = checkNotNull(result.data)
-                    state.copy(isRefreshing = false, project = project)
-                }
-            }
+            )
         }
     }
 
     fun refresh() {
-        val project = checkNotNull(state.project)
+        val project = checkNotNull(state.value.project)
         setup(project.id)
     }
 
@@ -71,39 +73,49 @@ class ProjectViewModel @Inject constructor(
     }
 
     fun deleteProject() {
-        val project = checkNotNull(state.project)
-        _state = state.copy(isRefreshing = true)
+        val project = checkNotNull(state.value.project)
 
         viewModelScope.launch {
-            _state = when (val result = deleteProject.deleteProject(project.id)) {
-                is Result.Error -> {
-                    logger.error(result.error) { "Unexpected error" }
-                    val message = UserMessage(result.error.kind())
-                    val userMessages = state.userMessages + message
-                    state.copy(isRefreshing = false, userMessages = userMessages)
+            _state.emit(value = state.value.copy(refreshing = true))
+
+            _state.emit(
+                value = when (val result = deleteProject.deleteProject(project.id)) {
+                    is Result.Error -> {
+                        logger.error(result.error) { "Unexpected error" }
+                        val message = UserMessage(result.error.kind())
+                        val userMessages = state.value.userMessages + message
+                        state.value.copy(refreshing = false, userMessages = userMessages)
+                    }
+                    is Result.Success -> {
+                        state.value.copy(refreshing = false)
+                    }
                 }
-                is Result.Success -> {
-                    state.copy(isRefreshing = false)
-                }
-            }
+            )
         }
     }
 
     fun userMessageShown(messageId: UUID) {
-        val messages = state.userMessages.filterNot { it.id == messageId }
-        _state = state.copy(userMessages = messages)
+        viewModelScope.launch {
+            val messages = state.value.userMessages.filterNot { it.id == messageId }
+            _state.emit(value = state.value.copy(userMessages = messages))
+        }
     }
 
     private fun closeTask(task: Task) {
-        _state = state.copy(isRefreshing = true)
-
         viewModelScope.launch {
+            _state.emit(value = state.value.copy(refreshing = true))
+
             when (val result = closeTask.closeTask(task.id)) {
                 is Result.Error -> {
                     logger.error(result.error) { "Unexpected error" }
                     val message = UserMessage(result.error.kind())
-                    val userMessages = state.userMessages + message
-                    _state = state.copy(isRefreshing = false, userMessages = userMessages)
+                    val userMessages = state.value.userMessages + message
+                    _state.emit(
+                        value = state.value.copy(
+                            refreshing = false,
+                            userMessages = userMessages,
+                        ),
+                    )
                 }
                 is Result.Success -> refresh()
             }
@@ -111,15 +123,20 @@ class ProjectViewModel @Inject constructor(
     }
 
     private fun reopenTask(task: Task) {
-        _state = state.copy(isRefreshing = true)
-
         viewModelScope.launch {
+            _state.emit(value = state.value.copy(refreshing = true))
+
             when (val result = reopenTask.reopenTask(task.id)) {
                 is Result.Error -> {
                     logger.error(result.error) { "Unexpected error" }
                     val message = UserMessage(result.error.kind())
-                    val userMessages = state.userMessages + message
-                    _state = state.copy(isRefreshing = false, userMessages = userMessages)
+                    val userMessages = state.value.userMessages + message
+                    _state.emit(
+                        value = state.value.copy(
+                            refreshing = false,
+                            userMessages = userMessages,
+                        ),
+                    )
                 }
                 is Result.Success -> refresh()
             }
@@ -130,6 +147,6 @@ class ProjectViewModel @Inject constructor(
 @Immutable
 data class ProjectScreenState(
     val project: Project? = null,
-    val isRefreshing: Boolean = true,
+    val refreshing: Boolean = true,
     override val userMessages: List<UserMessage<DomainErrorKind>> = listOf(),
 ) : MessageState<DomainErrorKind>

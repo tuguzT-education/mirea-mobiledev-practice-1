@@ -136,15 +136,15 @@ fun TaskScreen(
         ) {
             RichText(
                 modifier = Modifier
-                    .verticalScroll(rememberScrollState())
                     .padding(16.dp)
-                    .fillMaxSize(),
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
             ) {
                 Markdown(content = task.content)
             }
             pullRefreshState?.let {
                 PullRefreshIndicator(
-                    refreshing = state.isRefreshing,
+                    refreshing = state.refreshing,
                     state = it,
                     modifier = Modifier.align(Alignment.TopCenter),
                 )
@@ -182,7 +182,7 @@ private fun TaskScreen() {
                 ),
                 createdAt = Clock.System.now(),
             )
-            val state = TaskScreenState(task = task, isRefreshing = false)
+            val state = TaskScreenState(task = task, refreshing = false)
             TaskScreen(state, onNavigateUp = {})
         }
     }

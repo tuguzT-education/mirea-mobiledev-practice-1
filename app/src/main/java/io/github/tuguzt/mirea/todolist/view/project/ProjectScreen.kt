@@ -109,7 +109,7 @@ fun ProjectScreen(
             }
             pullRefreshState?.let {
                 PullRefreshIndicator(
-                    refreshing = state.isRefreshing,
+                    refreshing = state.refreshing,
                     state = it,
                     modifier = Modifier.align(Alignment.TopCenter),
                 )
@@ -146,7 +146,7 @@ private fun ProjectScreen() {
                     ),
                 ),
             )
-            val state = ProjectScreenState(project = project, isRefreshing = false)
+            val state = ProjectScreenState(project = project, refreshing = false)
             ProjectScreen(state, onNavigateUp = {})
         }
     }
