@@ -1,7 +1,6 @@
 package io.github.tuguzt.mirea.todolist.view.task
 
 import android.text.format.DateFormat
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -23,9 +22,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.google.accompanist.placeholder.PlaceholderHighlight
+import com.google.accompanist.placeholder.material.fade
+import com.google.accompanist.placeholder.material.placeholder
 import com.halilibo.richtext.markdown.Markdown
+import com.halilibo.richtext.ui.Heading
 import com.halilibo.richtext.ui.RichText
 import com.halilibo.richtext.ui.material3.SetupMaterial3RichText
+import com.halilibo.richtext.ui.string.Text
+import com.halilibo.richtext.ui.string.richTextString
 import io.github.tuguzt.mirea.todolist.R
 import io.github.tuguzt.mirea.todolist.domain.model.Id
 import io.github.tuguzt.mirea.todolist.domain.model.Task
@@ -45,8 +50,6 @@ fun TaskScreen(
     snackbarHostState: SnackbarHostState? = null,
     pullRefreshState: PullRefreshState? = null,
 ) {
-    val task = state.task ?: return
-
     val context = LocalContext.current
     val dateFormat = DateFormat.getLongDateFormat(context)
 
@@ -54,9 +57,21 @@ fun TaskScreen(
         topBar = {
             Column(modifier = Modifier.fillMaxWidth()) {
                 MediumTopAppBar(
-                    title = {
+                    title = title@{
+                        if (state.task == null) {
+                            Text(
+                                text = "Placeholder text",
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.placeholder(
+                                    visible = true,
+                                    highlight = PlaceholderHighlight.fade(),
+                                ),
+                            )
+                            return@title
+                        }
                         Text(
-                            text = task.name,
+                            text = state.task.name,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -71,9 +86,12 @@ fun TaskScreen(
                             }
                         }
                     },
-                    actions = {
+                    actions = actions@{
+                        if (state.task == null) {
+                            return@actions
+                        }
                         IconButton(onClick = onTaskCompletion) {
-                            when (task.completed) {
+                            when (state.task.completed) {
                                 true -> Icon(
                                     imageVector = Icons.Rounded.RemoveDone,
                                     contentDescription = stringResource(R.string.mark_not_completed),
@@ -93,34 +111,72 @@ fun TaskScreen(
                     },
                 )
 
-                Column(
-                    modifier = Modifier
-                        .background(MaterialTheme.colorScheme.surface)
-                        .padding(horizontal = 16.dp)
-                        .padding(bottom = 16.dp),
-                ) {
-                    Text(
-                        text = if (task.completed) {
-                            stringResource(R.string.completed)
-                        } else {
-                            stringResource(R.string.not_completed)
-                        },
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                    task.due?.let { due ->
-                        Spacer(modifier = Modifier.height(8.dp))
-                        val millis = due.datetime.toEpochMilliseconds()
+                Surface {
+                    Column(
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .padding(bottom = 16.dp),
+                    ) column@{
+                        if (state.task == null) {
+                            Text(
+                                text = stringResource(R.string.not_completed),
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.placeholder(
+                                    visible = true,
+                                    highlight = PlaceholderHighlight.fade(),
+                                ),
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            val millis = Clock.System.now().toEpochMilliseconds()
+                            Text(
+                                text = "Hello World (${dateFormat.format(millis)})",
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.placeholder(
+                                    visible = true,
+                                    highlight = PlaceholderHighlight.fade(),
+                                ),
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = stringResource(
+                                    R.string.task_created_at,
+                                    dateFormat.format(millis),
+                                ),
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.placeholder(
+                                    visible = true,
+                                    highlight = PlaceholderHighlight.fade(),
+                                ),
+                            )
+                            return@column
+                        }
+
                         Text(
-                            text = "${due.string} (${dateFormat.format(millis)})",
+                            text = if (state.task.completed) {
+                                stringResource(R.string.completed)
+                            } else {
+                                stringResource(R.string.not_completed)
+                            },
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        state.task.due?.let { due ->
+                            Spacer(modifier = Modifier.height(8.dp))
+                            val millis = due.datetime.toEpochMilliseconds()
+                            Text(
+                                text = "${due.string} (${dateFormat.format(millis)})",
+                                style = MaterialTheme.typography.titleMedium,
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        val millis = state.task.createdAt.toEpochMilliseconds()
+                        Text(
+                            text = stringResource(
+                                R.string.task_created_at,
+                                dateFormat.format(millis)
+                            ),
                             style = MaterialTheme.typography.titleMedium,
                         )
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    val millis = task.createdAt.toEpochMilliseconds()
-                    Text(
-                        text = "Created at ${dateFormat.format(millis)}",
-                        style = MaterialTheme.typography.titleMedium,
-                    )
                 }
             }
         },
@@ -140,7 +196,26 @@ fun TaskScreen(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState()),
             ) {
-                Markdown(content = task.content)
+                if (state.task == null) {
+                    Heading(level = 1) {
+                        Text(
+                            text = richTextString { append("Header") },
+                            modifier = Modifier.placeholder(
+                                visible = true,
+                                highlight = PlaceholderHighlight.fade(),
+                            ),
+                        )
+                    }
+                    Text(
+                        text = richTextString { append("Placeholder content") },
+                        modifier = Modifier.placeholder(
+                            visible = true,
+                            highlight = PlaceholderHighlight.fade(),
+                        ),
+                    )
+                    return@RichText
+                }
+                Markdown(content = state.task.content)
             }
             pullRefreshState?.let {
                 PullRefreshIndicator(
@@ -157,32 +232,45 @@ fun TaskScreen(
 @Preview
 @Composable
 private fun TaskScreen() {
+    val task = Task(
+        id = Id("42"),
+        name = "Hello World",
+        content = """
+            # Title
+            
+            Some text
+            
+            ## Subtitle
+            
+            ```rust
+            fn main() {
+                println!("Hello World")
+            }
+            ```
+            """.trimIndent(),
+        completed = false,
+        due = TaskDue(
+            string = "Tomorrow",
+            datetime = Clock.System.now() + 1.days,
+        ),
+        createdAt = Clock.System.now(),
+    )
+
     ToDoListTheme {
         SetupMaterial3RichText {
-            val task = Task(
-                id = Id("42"),
-                name = "Hello World",
-                content = """
-                    # Title
-                    
-                    Some text
-                    
-                    ## Subtitle
-                    
-                    ```rust
-                    fn main() {
-                        println!("Hello World")
-                    }
-                    ```
-                """.trimIndent(),
-                completed = false,
-                due = TaskDue(
-                    string = "Tomorrow",
-                    datetime = Clock.System.now() + 1.days,
-                ),
-                createdAt = Clock.System.now(),
-            )
             val state = TaskScreenState(task = task, refreshing = false)
+            TaskScreen(state, onNavigateUp = {})
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Preview
+@Composable
+private fun TaskScreenPlaceholder() {
+    ToDoListTheme {
+        SetupMaterial3RichText {
+            val state = TaskScreenState(task = null, refreshing = false)
             TaskScreen(state, onNavigateUp = {})
         }
     }
