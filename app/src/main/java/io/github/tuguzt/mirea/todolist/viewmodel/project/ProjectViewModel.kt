@@ -38,7 +38,11 @@ class ProjectViewModel @Inject constructor(
     private val _state = MutableStateFlow(ProjectScreenState())
     val state = _state.asStateFlow()
 
+    private var setupId: Id<Project>? = null
+
     fun setup(id: Id<Project>) {
+        setupId = id
+
         viewModelScope.launch {
             _state.emit(value = state.value.copy(refreshing = true))
 
@@ -60,8 +64,8 @@ class ProjectViewModel @Inject constructor(
     }
 
     fun refresh() {
-        val project = checkNotNull(state.value.project)
-        setup(project.id)
+        val id = checkNotNull(setupId)
+        setup(id)
     }
 
     fun changeTaskCompletion(task: Task) {

@@ -15,6 +15,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.google.accompanist.placeholder.PlaceholderHighlight
+import com.google.accompanist.placeholder.material.fade
+import com.google.accompanist.placeholder.material.placeholder
 import com.halilibo.richtext.ui.material3.SetupMaterial3RichText
 import io.github.tuguzt.mirea.todolist.R
 import io.github.tuguzt.mirea.todolist.domain.model.Id
@@ -26,7 +29,7 @@ import kotlinx.datetime.Clock
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskCard(
-    task: Task,
+    task: Task?,
     modifier: Modifier = Modifier,
     elevation: CardElevation = CardDefaults.cardElevation(),
     border: BorderStroke? = null,
@@ -49,6 +52,49 @@ fun TaskCard(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            if (task == null) {
+                Checkbox(
+                    checked = false,
+                    enabled = false,
+                    onCheckedChange = { onCheckboxClick() },
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Column {
+                    Text(
+                        text = "Placeholder text that no one will see",
+                        maxLines = 1,
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.placeholder(
+                            visible = true,
+                            highlight = PlaceholderHighlight.fade(),
+                        ),
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    AssistChip(
+                        onClick = onDueClick,
+                        enabled = false,
+                        label = {
+                            val millis = Clock.System.now().toEpochMilliseconds()
+                            Text(
+                                text = dateFormat.format(millis),
+                                modifier = Modifier.placeholder(
+                                    visible = true,
+                                    highlight = PlaceholderHighlight.fade(),
+                                ),
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Rounded.Event,
+                                contentDescription = stringResource(R.string.task_due),
+                                modifier = Modifier.size(AssistChipDefaults.IconSize),
+                            )
+                        },
+                    )
+                }
+                return@Row
+            }
+
             Checkbox(
                 checked = task.completed,
                 onCheckedChange = { onCheckboxClick() },
@@ -85,17 +131,35 @@ fun TaskCard(
 @Preview
 @Composable
 private fun TaskCard() {
+    val task = Task(
+        id = Id("42"),
+        name = "Hello `World`",
+        completed = true,
+        content = "Some task content",
+        due = TaskDue(
+            string = "",
+            datetime = Clock.System.now(),
+        ),
+        createdAt = Clock.System.now(),
+    )
+
     ToDoListTheme {
         SetupMaterial3RichText {
             TaskCard(
-                task = Task(
-                    id = Id("42"),
-                    name = "Hello `World`",
-                    completed = true,
-                    content = "Some task content",
-                    due = TaskDue(string = "", datetime = Clock.System.now()),
-                    createdAt = Clock.System.now(),
-                ),
+                task = task,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun TaskCardPlaceholder() {
+    ToDoListTheme {
+        SetupMaterial3RichText {
+            TaskCard(
+                task = null,
                 modifier = Modifier.fillMaxWidth(),
             )
         }

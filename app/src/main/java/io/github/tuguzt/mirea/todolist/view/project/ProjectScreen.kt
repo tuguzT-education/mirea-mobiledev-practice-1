@@ -19,6 +19,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.google.accompanist.placeholder.PlaceholderHighlight
+import com.google.accompanist.placeholder.material.fade
+import com.google.accompanist.placeholder.material.placeholder
 import com.halilibo.richtext.ui.material3.SetupMaterial3RichText
 import io.github.tuguzt.mirea.todolist.R
 import io.github.tuguzt.mirea.todolist.domain.model.Id
@@ -42,14 +45,24 @@ fun ProjectScreen(
     snackbarHostState: SnackbarHostState? = null,
     pullRefreshState: PullRefreshState? = null,
 ) {
-    val project = state.project ?: return
-
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
+                title = title@{
+                    if (state.project == null) {
+                        Text(
+                            text = "Placeholder text",
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.placeholder(
+                                visible = true,
+                                highlight = PlaceholderHighlight.fade(),
+                            ),
+                        )
+                        return@title
+                    }
                     Text(
-                        text = project.name,
+                        text = state.project.name,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -64,7 +77,10 @@ fun ProjectScreen(
                         }
                     }
                 },
-                actions = {
+                actions = actions@{
+                    if (state.project == null) {
+                        return@actions
+                    }
                     IconButton(onClick = onDeleteProject) {
                         Icon(
                             imageVector = Icons.Rounded.Delete,
@@ -97,7 +113,17 @@ fun ProjectScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                items(project.tasks, key = { it.id.value }) { task ->
+                if (state.project == null) {
+                    items(3) {
+                        TaskCard(
+                            task = null,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                    return@LazyColumn
+                }
+
+                items(state.project.tasks, key = { it.id.value }) { task ->
                     TaskCard(
                         task = task,
                         modifier = Modifier.fillMaxWidth(),
@@ -122,31 +148,44 @@ fun ProjectScreen(
 @Preview
 @Composable
 private fun ProjectScreen() {
+    val project = Project(
+        id = Id("42"),
+        name = "My project",
+        tasks = listOf(
+            Task(
+                id = Id("42"),
+                name = "Hello World",
+                completed = false,
+                content = "",
+                due = null,
+                createdAt = Clock.System.now(),
+            ),
+            Task(
+                id = Id("43"),
+                name = "Some task",
+                completed = true,
+                content = "",
+                due = null,
+                createdAt = Clock.System.now(),
+            ),
+        ),
+    )
+
     ToDoListTheme {
         SetupMaterial3RichText {
-            val project = Project(
-                id = Id("42"),
-                name = "My project",
-                tasks = listOf(
-                    Task(
-                        id = Id("42"),
-                        name = "Hello World",
-                        completed = false,
-                        content = "",
-                        due = null,
-                        createdAt = Clock.System.now(),
-                    ),
-                    Task(
-                        id = Id("43"),
-                        name = "Some task",
-                        completed = true,
-                        content = "",
-                        due = null,
-                        createdAt = Clock.System.now(),
-                    ),
-                ),
-            )
             val state = ProjectScreenState(project = project, refreshing = false)
+            ProjectScreen(state, onNavigateUp = {})
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Preview
+@Composable
+private fun ProjectScreenPlaceholder() {
+    ToDoListTheme {
+        SetupMaterial3RichText {
+            val state = ProjectScreenState(project = null, refreshing = false)
             ProjectScreen(state, onNavigateUp = {})
         }
     }
