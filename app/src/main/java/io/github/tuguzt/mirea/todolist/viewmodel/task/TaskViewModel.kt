@@ -7,10 +7,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.tuguzt.mirea.todolist.domain.Result
 import io.github.tuguzt.mirea.todolist.domain.model.Id
 import io.github.tuguzt.mirea.todolist.domain.model.Task
-import io.github.tuguzt.mirea.todolist.domain.usecase.CloseTask
-import io.github.tuguzt.mirea.todolist.domain.usecase.DeleteTask
-import io.github.tuguzt.mirea.todolist.domain.usecase.ReopenTask
-import io.github.tuguzt.mirea.todolist.domain.usecase.TaskById
+import io.github.tuguzt.mirea.todolist.domain.usecase.*
 import io.github.tuguzt.mirea.todolist.viewmodel.DomainErrorKind
 import io.github.tuguzt.mirea.todolist.viewmodel.MessageState
 import io.github.tuguzt.mirea.todolist.viewmodel.UserMessage
@@ -25,6 +22,7 @@ import javax.inject.Inject
 @HiltViewModel
 class TaskViewModel @Inject constructor(
     private val taskById: TaskById,
+    private val refreshTaskById: RefreshTaskById,
     private val closeTask: CloseTask,
     private val reopenTask: ReopenTask,
     private val deleteTask: DeleteTask,
@@ -43,9 +41,32 @@ class TaskViewModel @Inject constructor(
         setupId = id
 
         viewModelScope.launch {
+            when (val result = taskById.taskById(id)) {
+                is Result.Error -> {
+                    logger.error(result.error) { "Unexpected error" }
+                    val message = UserMessage(result.error.kind())
+                    val userMessages = state.value.userMessages + message
+                    _state.emit(state.value.copy(userMessages = userMessages))
+                }
+                is Result.Success -> {
+                    result.data.collect { task ->
+                        task?.let {
+                            val newTaskState = TaskState.Loaded(task)
+                            _state.emit(value = state.value.copy(taskState = newTaskState))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun refresh() {
+        val id = requireNotNull(setupId)
+
+        viewModelScope.launch {
             _state.emit(value = state.value.copy(refreshing = true))
             _state.emit(
-                value = when (val result = taskById.taskById(id)) {
+                value = when (val result = refreshTaskById.refreshTaskById(id)) {
                     is Result.Error -> {
                         logger.error(result.error) { "Unexpected error" }
                         val message = UserMessage(result.error.kind())
@@ -53,18 +74,12 @@ class TaskViewModel @Inject constructor(
                         state.value.copy(refreshing = false, userMessages = userMessages)
                     }
                     is Result.Success -> {
-                        val task = checkNotNull(result.data)
-                        val taskState = TaskState.Loaded(task)
-                        state.value.copy(refreshing = false, taskState = taskState)
+                        logger.debug { "Successful refreshing" }
+                        state.value.copy(refreshing = false)
                     }
                 }
             )
         }
-    }
-
-    fun refresh() {
-        val id = requireNotNull(setupId)
-        setup(id)
     }
 
     fun changeTaskCompletion() {
@@ -169,7 +184,7 @@ class TaskViewModel @Inject constructor(
 @Immutable
 data class TaskScreenState(
     val taskState: TaskState = TaskState.Initial,
-    val refreshing: Boolean = true,
+    val refreshing: Boolean = false,
     override val userMessages: List<UserMessage<DomainErrorKind>> = listOf(),
 ) : MessageState<DomainErrorKind>
 

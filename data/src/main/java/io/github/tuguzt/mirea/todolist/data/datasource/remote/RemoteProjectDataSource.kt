@@ -1,6 +1,5 @@
 package io.github.tuguzt.mirea.todolist.data.datasource.remote
 
-import io.github.tuguzt.mirea.todolist.data.datasource.ProjectDataSource
 import io.github.tuguzt.mirea.todolist.data.datasource.remote.model.*
 import io.github.tuguzt.mirea.todolist.data.datasource.remote.model.ApiTask
 import io.github.tuguzt.mirea.todolist.domain.*
@@ -12,11 +11,11 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 
-public class RemoteProjectDataSource(client: ApiClient) : ProjectDataSource {
+public class RemoteProjectDataSource(client: ApiClient) {
     private val projectApi = client.projectApi
     private val taskApi = client.taskApi
 
-    override suspend fun getAll(): DomainResult<List<Project>> =
+    public suspend fun getAll(): DomainResult<List<Project>> =
         when (val projectsResult = projectApi.all().toResult()) {
             is Result.Error -> projectsResult.cast()
             is Result.Success -> {
@@ -31,7 +30,7 @@ public class RemoteProjectDataSource(client: ApiClient) : ProjectDataSource {
             }
         }
 
-    override suspend fun findById(id: Id<Project>): DomainResult<Project?> =
+    public suspend fun findById(id: Id<Project>): DomainResult<Project?> =
         when (val projectResult = projectApi.find(id.value).toResult()) {
             is Result.Error -> projectResult.cast()
             is Result.Success -> when (val toDomainResult = projectResult.data.toDomain()) {
@@ -40,7 +39,7 @@ public class RemoteProjectDataSource(client: ApiClient) : ProjectDataSource {
             }
         }
 
-    override suspend fun create(create: CreateProject): DomainResult<Project> {
+    public suspend fun create(create: CreateProject): DomainResult<Project> {
         val apiCreate = ApiCreateProject(name = create.name)
         return when (val projectResult = projectApi.create(apiCreate).toResult()) {
             is Result.Error -> projectResult.cast()
@@ -51,7 +50,7 @@ public class RemoteProjectDataSource(client: ApiClient) : ProjectDataSource {
         }
     }
 
-    override suspend fun update(id: Id<Project>, update: UpdateProject): DomainResult<Project> {
+    public suspend fun update(id: Id<Project>, update: UpdateProject): DomainResult<Project> {
         val apiUpdate = ApiUpdateProject(name = update.name)
         return when (val projectResult = projectApi.update(id.value, apiUpdate).toResult()) {
             is Result.Error -> projectResult.cast()
@@ -62,7 +61,7 @@ public class RemoteProjectDataSource(client: ApiClient) : ProjectDataSource {
         }
     }
 
-    override suspend fun delete(id: Id<Project>): DomainResult<Unit> =
+    public suspend fun delete(id: Id<Project>): DomainResult<Unit> =
         projectApi.delete(id.value).toResult()
 
     private suspend fun ApiProject.toDomain(): DomainResult<Project> {
@@ -76,7 +75,7 @@ public class RemoteProjectDataSource(client: ApiClient) : ProjectDataSource {
 }
 
 @Suppress("SpellCheckingInspection")
-internal suspend fun <A, B> Iterable<A>.pmap(f: suspend (A) -> B): List<B> =
+internal suspend inline fun <A, B> Iterable<A>.pmap(crossinline f: suspend (A) -> B): List<B> =
     coroutineScope {
         map { async { f(it) } }.awaitAll()
     }

@@ -44,6 +44,22 @@ object AppModule {
         ProjectById(repository)
 
     @Provides
+    fun provideRefreshAllProjects(repository: ProjectRepository): RefreshAllProjects =
+        RefreshAllProjects(repository)
+
+    @Provides
+    fun provideRefreshAllTasks(repository: TaskRepository): RefreshAllTasks =
+        RefreshAllTasks(repository)
+
+    @Provides
+    fun provideRefreshProjectById(repository: ProjectRepository): RefreshProjectById =
+        RefreshProjectById(repository)
+
+    @Provides
+    fun provideRefreshTaskById(repository: TaskRepository): RefreshTaskById =
+        RefreshTaskById(repository)
+
+    @Provides
     fun provideReopenTask(repository: TaskRepository): ReopenTask =
         ReopenTask(repository)
 

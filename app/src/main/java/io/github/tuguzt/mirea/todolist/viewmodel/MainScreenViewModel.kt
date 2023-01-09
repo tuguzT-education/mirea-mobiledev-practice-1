@@ -8,6 +8,7 @@ import io.github.tuguzt.mirea.todolist.domain.Result
 import io.github.tuguzt.mirea.todolist.domain.model.Project
 import io.github.tuguzt.mirea.todolist.domain.model.Task
 import io.github.tuguzt.mirea.todolist.domain.usecase.AllProjects
+import io.github.tuguzt.mirea.todolist.domain.usecase.RefreshAllProjects
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -18,6 +19,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MainScreenViewModel @Inject constructor(
     private val allProjects: AllProjects,
+    private val refreshAllProjects: RefreshAllProjects,
 ) : ViewModel() {
 
     companion object {
@@ -28,15 +30,31 @@ class MainScreenViewModel @Inject constructor(
     val state = _state.asStateFlow()
 
     init {
-        refresh()
+        viewModelScope.launch {
+            _state.emit(value = state.value.copy(refreshing = true))
+            when (val result = allProjects.allProjects()) {
+                is Result.Error -> {
+                    logger.error(result.error) { "Unexpected error" }
+                    val message = UserMessage(result.error.kind())
+                    val userMessages = state.value.userMessages + message
+                    _state.emit(state.value.copy(refreshing = false, userMessages = userMessages))
+                }
+                is Result.Success -> {
+                    logger.debug { "Projects retrieved successfully" }
+                    _state.emit(state.value.copy(refreshing = false))
+                    result.data.collect { projects ->
+                        _state.emit(value = state.value.copy(projects = projects))
+                    }
+                }
+            }
+        }
     }
 
     fun refresh() {
         viewModelScope.launch {
             _state.emit(value = state.value.copy(refreshing = true))
-
             _state.emit(
-                value = when (val result = allProjects.allProjects()) {
+                value = when (val result = refreshAllProjects.refreshAllProjects()) {
                     is Result.Error -> {
                         logger.error(result.error) { "Unexpected error" }
                         val message = UserMessage(result.error.kind())
@@ -45,7 +63,7 @@ class MainScreenViewModel @Inject constructor(
                     }
                     is Result.Success -> {
                         logger.debug { "Successful refreshing" }
-                        state.value.copy(refreshing = false, projects = result.data)
+                        state.value.copy(refreshing = false)
                     }
                 }
             )

@@ -1,6 +1,5 @@
 package io.github.tuguzt.mirea.todolist.data.datasource.remote
 
-import io.github.tuguzt.mirea.todolist.data.datasource.TaskDataSource
 import io.github.tuguzt.mirea.todolist.data.datasource.remote.model.ApiCreateTask
 import io.github.tuguzt.mirea.todolist.data.datasource.remote.model.ApiTask
 import io.github.tuguzt.mirea.todolist.data.datasource.remote.model.ApiUpdateTask
@@ -14,16 +13,16 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 
-public class RemoteTaskDataSource(client: ApiClient) : TaskDataSource {
+public class RemoteTaskDataSource(client: ApiClient) {
     private val taskApi = client.taskApi
 
-    override suspend fun getAll(project: Id<Project>): DomainResult<List<Task>> =
+    public suspend fun getAll(project: Id<Project>): DomainResult<List<Task>> =
         taskApi.all(project.value).toResult().map { tasks -> tasks.map(ApiTask::toDomain) }
 
-    override suspend fun findById(id: Id<Task>): DomainResult<Task?> =
+    public suspend fun findById(id: Id<Task>): DomainResult<Task?> =
         taskApi.find(id.value).toResult().map(ApiTask::toDomain)
 
-    override suspend fun create(create: CreateTask): DomainResult<Task> {
+    public suspend fun create(create: CreateTask): DomainResult<Task> {
         val apiCreate = ApiCreateTask(
             projectId = create.project.value,
             content = create.name,
@@ -32,7 +31,7 @@ public class RemoteTaskDataSource(client: ApiClient) : TaskDataSource {
         return taskApi.create(apiCreate).toResult().map(ApiTask::toDomain)
     }
 
-    override suspend fun update(id: Id<Task>, update: UpdateTask): DomainResult<Task> {
+    public suspend fun update(id: Id<Task>, update: UpdateTask): DomainResult<Task> {
         update.completed?.let { completed ->
             if (completed) {
                 when (val result = taskApi.close(id.value).toResult()) {
@@ -63,7 +62,7 @@ public class RemoteTaskDataSource(client: ApiClient) : TaskDataSource {
         return findById(id).map(::checkNotNull)
     }
 
-    override suspend fun delete(id: Id<Task>): DomainResult<Unit> =
+    public suspend fun delete(id: Id<Task>): DomainResult<Unit> =
         taskApi.delete(id.value).toResult()
 }
 

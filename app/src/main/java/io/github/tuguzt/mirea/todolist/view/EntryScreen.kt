@@ -86,7 +86,6 @@ fun EntryScreen(
                 LaunchedEffect(state) {
                     if (state.projectState is ProjectState.Deleted) {
                         navController.navigateUp()
-                        mainViewModel.refresh()
                     }
                 }
 
@@ -132,7 +131,6 @@ fun EntryScreen(
                 LaunchedEffect(state) {
                     if (state.newProjectState is NewProjectState.Created) {
                         navController.navigateUp()
-                        mainViewModel.refresh()
                     }
                 }
 

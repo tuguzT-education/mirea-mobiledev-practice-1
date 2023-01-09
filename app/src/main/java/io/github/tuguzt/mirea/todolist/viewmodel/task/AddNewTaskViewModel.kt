@@ -15,6 +15,7 @@ import io.github.tuguzt.mirea.todolist.viewmodel.UserMessage
 import io.github.tuguzt.mirea.todolist.viewmodel.kind
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import java.util.*
@@ -46,7 +47,7 @@ class AddNewTaskViewModel @Inject constructor(
                         state.value.copy(refreshing = false, userMessages = userMessages)
                     }
                     is Result.Success -> {
-                        val project = checkNotNull(result.data)
+                        val project = requireNotNull(result.data.first())
                         val create = CreateTask(project = project.id, name = "", content = "")
                         state.value.copy(
                             refreshing = false,
