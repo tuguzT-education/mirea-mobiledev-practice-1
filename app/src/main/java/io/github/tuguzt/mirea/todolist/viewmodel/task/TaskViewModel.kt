@@ -37,7 +37,11 @@ class TaskViewModel @Inject constructor(
     private val _state = MutableStateFlow(TaskScreenState())
     val state = _state.asStateFlow()
 
+    private var setupId: Id<Task>? = null
+
     fun setup(id: Id<Task>) {
+        setupId = id
+
         viewModelScope.launch {
             _state.emit(value = state.value.copy(refreshing = true))
 
@@ -59,8 +63,8 @@ class TaskViewModel @Inject constructor(
     }
 
     fun refresh() {
-        val task = requireNotNull(state.value.task)
-        setup(task.id)
+        val id = requireNotNull(setupId)
+        setup(id)
     }
 
     fun changeTaskCompletion() {
