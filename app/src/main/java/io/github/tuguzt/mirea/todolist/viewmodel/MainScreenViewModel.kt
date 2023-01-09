@@ -62,20 +62,20 @@ class MainScreenViewModel @Inject constructor(
 
 @Immutable
 data class MainScreenState(
-    val projects: List<Project> = listOf(),
+    val projects: List<Project>? = null,
     val refreshing: Boolean = true,
     override val userMessages: List<UserMessage<DomainErrorKind>> = listOf(),
 ) : MessageState<DomainErrorKind> {
 
     val todoProjects by lazy {
-        projects.filter { project ->
+        projects?.filter { project ->
             val tasks = project.tasks
             tasks.isEmpty() || tasks.size > tasks.count(Task::completed)
         }
     }
 
     val completedProjects by lazy {
-        projects.filter { project ->
+        projects?.filter { project ->
             val tasks = project.tasks
             tasks.isNotEmpty() && tasks.size == tasks.count(Task::completed)
         }

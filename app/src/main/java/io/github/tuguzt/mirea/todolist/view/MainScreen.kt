@@ -19,6 +19,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.google.accompanist.placeholder.PlaceholderHighlight
+import com.google.accompanist.placeholder.material.fade
+import com.google.accompanist.placeholder.material.placeholder
 import com.halilibo.richtext.ui.material3.SetupMaterial3RichText
 import io.github.tuguzt.mirea.todolist.R
 import io.github.tuguzt.mirea.todolist.domain.model.Id
@@ -88,18 +91,24 @@ private fun ProjectList(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        val todoProjects = state.todoProjects
+        if (state.projects == null) {
+            ProjectGroup()
+            return@LazyColumn
+        }
+
+        val todoProjects = requireNotNull(state.todoProjects)
         if (todoProjects.isNotEmpty()) {
-            projectGroup(
+            ProjectGroup(
                 projects = todoProjects,
                 header = context.getString(R.string.todo_projects),
                 onProjectClick = onProjectClick,
             )
             item {}
         }
-        val completedProjects = state.completedProjects
+
+        val completedProjects = requireNotNull(state.completedProjects)
         if (completedProjects.isNotEmpty()) {
-            projectGroup(
+            ProjectGroup(
                 projects = completedProjects,
                 header = context.getString(R.string.completed_projects),
                 onProjectClick = onProjectClick,
@@ -108,20 +117,22 @@ private fun ProjectList(
     }
 }
 
+@Suppress("FunctionName")
 @OptIn(ExperimentalFoundationApi::class)
-private fun LazyListScope.projectGroup(
+private fun LazyListScope.ProjectGroup(
     projects: List<Project>,
     header: String,
     onProjectClick: (Project) -> Unit,
 ) {
     stickyHeader {
         Surface(tonalElevation = 2.dp) {
-            Text(
-                text = header,
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 4.dp),
-            )
+            ) {
+                Text(text = header)
+            }
         }
     }
     items(projects, key = { it.id.value }) { project ->
@@ -135,10 +146,49 @@ private fun LazyListScope.projectGroup(
     }
 }
 
+@Suppress("FunctionName")
+@OptIn(ExperimentalFoundationApi::class)
+private fun LazyListScope.ProjectGroup() {
+    stickyHeader {
+        Surface(tonalElevation = 2.dp) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+            ) {
+                Text(
+                    text = "Placeholder group",
+                    modifier = Modifier
+                        .placeholder(
+                            visible = true,
+                            highlight = PlaceholderHighlight.fade(),
+                        ),
+                )
+            }
+        }
+    }
+    items(3) {
+        ProjectCard(
+            project = null,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 private fun ProjectGroup() {
+    val projects = listOf(
+        Project(
+            id = Id("42"),
+            name = "Hello World",
+            tasks = listOf(),
+        ),
+    )
+
     ToDoListTheme {
         SetupMaterial3RichText {
             Scaffold { padding ->
@@ -148,14 +198,7 @@ private fun ProjectGroup() {
                         .fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    val projects = listOf(
-                        Project(
-                            id = Id("42"),
-                            name = "Hello World",
-                            tasks = listOf(),
-                        ),
-                    )
-                    projectGroup(
+                    ProjectGroup(
                         projects = projects,
                         header = "Hello World",
                         onProjectClick = {},
