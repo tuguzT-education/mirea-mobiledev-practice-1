@@ -26,9 +26,11 @@ import io.github.tuguzt.mirea.todolist.view.task.AddNewTaskScreen
 import io.github.tuguzt.mirea.todolist.view.task.TaskScreen
 import io.github.tuguzt.mirea.todolist.viewmodel.MainScreenViewModel
 import io.github.tuguzt.mirea.todolist.viewmodel.project.AddNewProjectViewModel
+import io.github.tuguzt.mirea.todolist.viewmodel.project.NewProjectState
 import io.github.tuguzt.mirea.todolist.viewmodel.project.ProjectState
 import io.github.tuguzt.mirea.todolist.viewmodel.project.ProjectViewModel
 import io.github.tuguzt.mirea.todolist.viewmodel.task.AddNewTaskViewModel
+import io.github.tuguzt.mirea.todolist.viewmodel.task.NewTaskState
 import io.github.tuguzt.mirea.todolist.viewmodel.task.TaskState
 import io.github.tuguzt.mirea.todolist.viewmodel.task.TaskViewModel
 
@@ -120,21 +122,28 @@ fun EntryScreen(
                     }
                 }
             }
-            dialog(route = "addNewProject") {
+            dialog(
+                route = "addNewProject",
+                dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+            ) {
                 val viewModel: AddNewProjectViewModel = hiltViewModel()
 
-                AddNewProjectScreen(
-                    projectName = viewModel.projectName,
-                    onProjectNameChange = viewModel::projectName::set,
-                    addEnabled = viewModel.canAdd(),
-                    onAdd = {
-                        viewModel.addNewProject()
-                        mainViewModel.refresh()
+                val state by viewModel.state.collectAsState()
+                LaunchedEffect(state) {
+                    if (state.newProjectState is NewProjectState.Created) {
                         navController.navigateUp()
-                    },
+                        mainViewModel.refresh()
+                    }
+                }
+
+                AddNewProjectScreen(
+                    state = state,
+                    onProjectNameChange = viewModel::setProjectName,
+                    canAdd = viewModel.canAdd(),
+                    onAdd = viewModel::addNewProject,
                 )
 
-                viewModel.state.userMessages.firstOrNull()?.let { message ->
+                state.userMessages.firstOrNull()?.let { message ->
                     LaunchedEffect(message) {
                         snackbarHostState.showSnackbar(
                             message = message.kind.name,
@@ -193,19 +202,22 @@ fun EntryScreen(
                     viewModel.setup(id)
                 }
 
-                AddNewTaskScreen(
-                    taskName = viewModel.taskName,
-                    onTaskNameChange = viewModel::taskName::set,
-                    taskContent = viewModel.taskContent,
-                    onTaskContentChange = viewModel::taskContent::set,
-                    addEnabled = viewModel.canAdd(),
-                    onAdd = {
-                        viewModel.addNewTask()
+                val state by viewModel.state.collectAsState()
+                LaunchedEffect(state) {
+                    if (state.newTaskState is NewTaskState.Created) {
                         navController.navigateUp()
-                    },
+                    }
+                }
+
+                AddNewTaskScreen(
+                    state = state,
+                    onTaskNameChange = viewModel::setTaskName,
+                    onTaskContentChange = viewModel::setTaskContent,
+                    canAdd = viewModel.canAdd(),
+                    onAdd = viewModel::addNewTask,
                 )
 
-                viewModel.state.userMessages.firstOrNull()?.let { message ->
+                state.userMessages.firstOrNull()?.let { message ->
                     LaunchedEffect(message) {
                         snackbarHostState.showSnackbar(
                             message = message.kind.name,

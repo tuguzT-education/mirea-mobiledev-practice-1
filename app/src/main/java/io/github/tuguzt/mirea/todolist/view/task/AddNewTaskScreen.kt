@@ -13,18 +13,25 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.halilibo.richtext.ui.material3.SetupMaterial3RichText
 import io.github.tuguzt.mirea.todolist.R
+import io.github.tuguzt.mirea.todolist.domain.model.CreateTask
+import io.github.tuguzt.mirea.todolist.domain.model.Id
 import io.github.tuguzt.mirea.todolist.view.theme.ToDoListTheme
+import io.github.tuguzt.mirea.todolist.viewmodel.task.AddNewTaskScreenState
+import io.github.tuguzt.mirea.todolist.viewmodel.task.NewTaskState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddNewTaskScreen(
-    taskName: String,
+    state: AddNewTaskScreenState,
     onTaskNameChange: (String) -> Unit,
-    taskContent: String,
     onTaskContentChange: (String) -> Unit,
-    addEnabled: Boolean = false,
+    canAdd: Boolean = false,
     onAdd: () -> Unit = {},
 ) {
+    if (state.newTaskState is NewTaskState.Created) {
+        return
+    }
+
     Surface(shape = MaterialTheme.shapes.medium) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
@@ -33,25 +40,42 @@ fun AddNewTaskScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
-                value = taskName,
+                value = (state.newTaskState as? NewTaskState.ToBeCreated)?.create?.name ?: "",
                 onValueChange = onTaskNameChange,
+                enabled = !state.refreshing && state.newTaskState is NewTaskState.ToBeCreated,
                 label = { Text(text = stringResource(R.string.task_name)) },
                 maxLines = 1,
                 singleLine = true,
             )
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedTextField(
-                value = taskContent,
+                value = (state.newTaskState as? NewTaskState.ToBeCreated)?.create?.content ?: "",
                 onValueChange = onTaskContentChange,
+                enabled = !state.refreshing && state.newTaskState is NewTaskState.ToBeCreated,
                 label = { Text(text = stringResource(R.string.task_content)) },
             )
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = onAdd,
                 modifier = Modifier.align(Alignment.End),
-                enabled = addEnabled,
+                enabled = canAdd && !state.refreshing,
             ) {
                 Text(text = stringResource(R.string.add_new_task))
+            }
+
+            if (state.refreshing) {
+                if (state.newTaskState is NewTaskState.ToBeCreated) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = stringResource(R.string.creating_new_task),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                LinearProgressIndicator(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                )
             }
         }
     }
@@ -60,24 +84,30 @@ fun AddNewTaskScreen(
 @Preview
 @Composable
 private fun AddNewTaskScreen() {
+    val create = CreateTask(
+        project = Id("42"),
+        name = "Hello World",
+        content = """
+            # Title
+            
+            Some supporting text
+            
+            ## Subtitle
+            
+            ```rust
+            fn main() {
+                println!("Hello World")
+            }
+            ```
+        """.trimIndent(),
+    )
+
     ToDoListTheme {
         SetupMaterial3RichText {
+            val state = AddNewTaskScreenState(newTaskState = NewTaskState.ToBeCreated(create))
             AddNewTaskScreen(
-                taskName = "Hello World",
+                state = state,
                 onTaskNameChange = {},
-                taskContent = """
-                    # Title
-                    
-                    Some supporting text
-                    
-                    ## Subtitle
-                    
-                    ```rust
-                    fn main() {
-                        println!("Hello World")
-                    }
-                    ```
-                """.trimIndent(),
                 onTaskContentChange = {},
             )
         }

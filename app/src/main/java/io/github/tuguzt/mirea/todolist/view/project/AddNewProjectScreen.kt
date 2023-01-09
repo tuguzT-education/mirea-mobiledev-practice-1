@@ -11,15 +11,21 @@ import androidx.compose.ui.unit.dp
 import com.halilibo.richtext.ui.material3.SetupMaterial3RichText
 import io.github.tuguzt.mirea.todolist.R
 import io.github.tuguzt.mirea.todolist.view.theme.ToDoListTheme
+import io.github.tuguzt.mirea.todolist.viewmodel.project.AddNewProjectScreenState
+import io.github.tuguzt.mirea.todolist.viewmodel.project.NewProjectState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddNewProjectScreen(
-    projectName: String,
+    state: AddNewProjectScreenState,
     onProjectNameChange: (String) -> Unit,
-    addEnabled: Boolean = false,
+    canAdd: Boolean = false,
     onAdd: () -> Unit = {},
 ) {
+    if (state.newProjectState !is NewProjectState.ToBeCreated) {
+        return
+    }
+
     Surface(shape = MaterialTheme.shapes.medium) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
@@ -28,8 +34,9 @@ fun AddNewProjectScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
-                value = projectName,
+                value = state.newProjectState.create.name,
                 onValueChange = onProjectNameChange,
+                enabled = !state.refreshing,
                 label = { Text(text = stringResource(R.string.project_name)) },
                 maxLines = 1,
                 singleLine = true,
@@ -38,9 +45,22 @@ fun AddNewProjectScreen(
             Button(
                 onClick = onAdd,
                 modifier = Modifier.align(Alignment.End),
-                enabled = addEnabled,
+                enabled = canAdd && !state.refreshing,
             ) {
                 Text(text = stringResource(R.string.add_new_project))
+            }
+
+            if (state.refreshing) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = stringResource(R.string.creating_new_project),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                LinearProgressIndicator(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                )
             }
         }
     }
@@ -51,10 +71,24 @@ fun AddNewProjectScreen(
 private fun AddNewProjectScreen() {
     ToDoListTheme {
         SetupMaterial3RichText {
+            val state = AddNewProjectScreenState()
             AddNewProjectScreen(
-                projectName = "",
+                state = state,
                 onProjectNameChange = {},
-                onAdd = {},
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun AddNewProjectScreenRefreshing() {
+    ToDoListTheme {
+        SetupMaterial3RichText {
+            val state = AddNewProjectScreenState(refreshing = true)
+            AddNewProjectScreen(
+                state = state,
+                onProjectNameChange = {},
             )
         }
     }
