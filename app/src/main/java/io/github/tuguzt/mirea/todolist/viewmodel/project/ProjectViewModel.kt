@@ -45,7 +45,6 @@ class ProjectViewModel @Inject constructor(
 
         viewModelScope.launch {
             _state.emit(value = state.value.copy(refreshing = true))
-
             _state.emit(
                 value = when (val result = projectById.projectById(id)) {
                     is Result.Error -> {
@@ -56,7 +55,8 @@ class ProjectViewModel @Inject constructor(
                     }
                     is Result.Success -> {
                         val project = checkNotNull(result.data)
-                        state.value.copy(refreshing = false, project = project)
+                        val projectState = ProjectState.Loaded(project)
+                        state.value.copy(refreshing = false, projectState = projectState)
                     }
                 }
             )
@@ -69,6 +69,11 @@ class ProjectViewModel @Inject constructor(
     }
 
     fun changeTaskCompletion(task: Task) {
+        val projectState = state.value.projectState
+        check(projectState is ProjectState.Loaded)
+
+        require(projectState.project.tasks.find { it.id == task.id } != null)
+
         if (task.completed) {
             reopenTask(task)
         } else {
@@ -77,13 +82,14 @@ class ProjectViewModel @Inject constructor(
     }
 
     fun deleteProject() {
-        val project = checkNotNull(state.value.project)
+        val projectState = state.value.projectState
+        check(projectState is ProjectState.Loaded)
+        val projectId = projectState.project.id
 
         viewModelScope.launch {
             _state.emit(value = state.value.copy(refreshing = true))
-
             _state.emit(
-                value = when (val result = deleteProject.deleteProject(project.id)) {
+                value = when (val result = deleteProject.deleteProject(projectId)) {
                     is Result.Error -> {
                         logger.error(result.error) { "Unexpected error" }
                         val message = UserMessage(result.error.kind())
@@ -91,7 +97,7 @@ class ProjectViewModel @Inject constructor(
                         state.value.copy(refreshing = false, userMessages = userMessages)
                     }
                     is Result.Success -> {
-                        state.value.copy(refreshing = false)
+                        state.value.copy(refreshing = false, projectState = ProjectState.Deleted)
                     }
                 }
             )
@@ -150,7 +156,19 @@ class ProjectViewModel @Inject constructor(
 
 @Immutable
 data class ProjectScreenState(
-    val project: Project? = null,
+    val projectState: ProjectState = ProjectState.Initial,
     val refreshing: Boolean = true,
     override val userMessages: List<UserMessage<DomainErrorKind>> = listOf(),
 ) : MessageState<DomainErrorKind>
+
+@Immutable
+sealed interface ProjectState {
+    @Immutable
+    object Initial : ProjectState
+
+    @Immutable
+    data class Loaded(val project: Project) : ProjectState
+
+    @Immutable
+    object Deleted : ProjectState
+}

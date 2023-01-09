@@ -30,6 +30,7 @@ import io.github.tuguzt.mirea.todolist.domain.model.Task
 import io.github.tuguzt.mirea.todolist.view.task.TaskCard
 import io.github.tuguzt.mirea.todolist.view.theme.ToDoListTheme
 import io.github.tuguzt.mirea.todolist.viewmodel.project.ProjectScreenState
+import io.github.tuguzt.mirea.todolist.viewmodel.project.ProjectState
 import kotlinx.datetime.Clock
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
@@ -45,11 +46,15 @@ fun ProjectScreen(
     snackbarHostState: SnackbarHostState? = null,
     pullRefreshState: PullRefreshState? = null,
 ) {
+    if (state.projectState is ProjectState.Deleted) {
+        return
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = title@{
-                    if (state.project == null) {
+                    if (state.projectState !is ProjectState.Loaded) {
                         Text(
                             text = "Placeholder text",
                             maxLines = 1,
@@ -62,7 +67,7 @@ fun ProjectScreen(
                         return@title
                     }
                     Text(
-                        text = state.project.name,
+                        text = state.projectState.project.name,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -78,7 +83,7 @@ fun ProjectScreen(
                     }
                 },
                 actions = actions@{
-                    if (state.project == null) {
+                    if (state.projectState !is ProjectState.Loaded) {
                         return@actions
                     }
                     IconButton(onClick = onDeleteProject) {
@@ -113,7 +118,7 @@ fun ProjectScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                if (state.project == null) {
+                if (state.projectState !is ProjectState.Loaded) {
                     items(3) {
                         TaskCard(
                             task = null,
@@ -123,7 +128,7 @@ fun ProjectScreen(
                     return@LazyColumn
                 }
 
-                items(state.project.tasks, key = { it.id.value }) { task ->
+                items(state.projectState.project.tasks, key = { it.id.value }) { task ->
                     TaskCard(
                         task = task,
                         modifier = Modifier.fillMaxWidth(),
@@ -173,7 +178,10 @@ private fun ProjectScreen() {
 
     ToDoListTheme {
         SetupMaterial3RichText {
-            val state = ProjectScreenState(project = project, refreshing = false)
+            val state = ProjectScreenState(
+                projectState = ProjectState.Loaded(project),
+                refreshing = false,
+            )
             ProjectScreen(state, onNavigateUp = {})
         }
     }
@@ -185,7 +193,10 @@ private fun ProjectScreen() {
 private fun ProjectScreenPlaceholder() {
     ToDoListTheme {
         SetupMaterial3RichText {
-            val state = ProjectScreenState(project = null, refreshing = false)
+            val state = ProjectScreenState(
+                projectState = ProjectState.Initial,
+                refreshing = false,
+            )
             ProjectScreen(state, onNavigateUp = {})
         }
     }

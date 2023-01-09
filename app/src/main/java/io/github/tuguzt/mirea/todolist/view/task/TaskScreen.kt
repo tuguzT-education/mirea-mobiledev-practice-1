@@ -37,6 +37,7 @@ import io.github.tuguzt.mirea.todolist.domain.model.Task
 import io.github.tuguzt.mirea.todolist.domain.model.TaskDue
 import io.github.tuguzt.mirea.todolist.view.theme.ToDoListTheme
 import io.github.tuguzt.mirea.todolist.viewmodel.task.TaskScreenState
+import io.github.tuguzt.mirea.todolist.viewmodel.task.TaskState
 import kotlinx.datetime.Clock
 import kotlin.time.Duration.Companion.days
 
@@ -50,6 +51,10 @@ fun TaskScreen(
     snackbarHostState: SnackbarHostState? = null,
     pullRefreshState: PullRefreshState? = null,
 ) {
+    if (state.taskState is TaskState.Deleted) {
+        return
+    }
+
     val context = LocalContext.current
     val dateFormat = DateFormat.getLongDateFormat(context)
 
@@ -58,7 +63,7 @@ fun TaskScreen(
             Column(modifier = Modifier.fillMaxWidth()) {
                 MediumTopAppBar(
                     title = title@{
-                        if (state.task == null) {
+                        if (state.taskState !is TaskState.Loaded) {
                             Text(
                                 text = "Placeholder text",
                                 maxLines = 1,
@@ -71,7 +76,7 @@ fun TaskScreen(
                             return@title
                         }
                         Text(
-                            text = state.task.name,
+                            text = state.taskState.task.name,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -87,11 +92,11 @@ fun TaskScreen(
                         }
                     },
                     actions = actions@{
-                        if (state.task == null) {
+                        if (state.taskState !is TaskState.Loaded) {
                             return@actions
                         }
                         IconButton(onClick = onTaskCompletion) {
-                            when (state.task.completed) {
+                            when (state.taskState.task.completed) {
                                 true -> Icon(
                                     imageVector = Icons.Rounded.RemoveDone,
                                     contentDescription = stringResource(R.string.mark_not_completed),
@@ -117,7 +122,7 @@ fun TaskScreen(
                             .padding(horizontal = 16.dp)
                             .padding(bottom = 16.dp),
                     ) column@{
-                        if (state.task == null) {
+                        if (state.taskState !is TaskState.Loaded) {
                             Text(
                                 text = stringResource(R.string.not_completed),
                                 style = MaterialTheme.typography.titleMedium,
@@ -152,14 +157,14 @@ fun TaskScreen(
                         }
 
                         Text(
-                            text = if (state.task.completed) {
+                            text = if (state.taskState.task.completed) {
                                 stringResource(R.string.completed)
                             } else {
                                 stringResource(R.string.not_completed)
                             },
                             style = MaterialTheme.typography.titleMedium,
                         )
-                        state.task.due?.let { due ->
+                        state.taskState.task.due?.let { due ->
                             Spacer(modifier = Modifier.height(8.dp))
                             val millis = due.datetime.toEpochMilliseconds()
                             Text(
@@ -168,7 +173,7 @@ fun TaskScreen(
                             )
                         }
                         Spacer(modifier = Modifier.height(8.dp))
-                        val millis = state.task.createdAt.toEpochMilliseconds()
+                        val millis = state.taskState.task.createdAt.toEpochMilliseconds()
                         Text(
                             text = stringResource(
                                 R.string.task_created_at,
@@ -196,7 +201,7 @@ fun TaskScreen(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState()),
             ) {
-                if (state.task == null) {
+                if (state.taskState !is TaskState.Loaded) {
                     Heading(level = 1) {
                         Text(
                             text = richTextString { append("Header") },
@@ -215,7 +220,7 @@ fun TaskScreen(
                     )
                     return@RichText
                 }
-                Markdown(content = state.task.content)
+                Markdown(content = state.taskState.task.content)
             }
             pullRefreshState?.let {
                 PullRefreshIndicator(
@@ -258,7 +263,10 @@ private fun TaskScreen() {
 
     ToDoListTheme {
         SetupMaterial3RichText {
-            val state = TaskScreenState(task = task, refreshing = false)
+            val state = TaskScreenState(
+                taskState = TaskState.Loaded(task),
+                refreshing = false,
+            )
             TaskScreen(state, onNavigateUp = {})
         }
     }
@@ -270,7 +278,10 @@ private fun TaskScreen() {
 private fun TaskScreenPlaceholder() {
     ToDoListTheme {
         SetupMaterial3RichText {
-            val state = TaskScreenState(task = null, refreshing = false)
+            val state = TaskScreenState(
+                taskState = TaskState.Initial,
+                refreshing = false,
+            )
             TaskScreen(state, onNavigateUp = {})
         }
     }

@@ -44,7 +44,6 @@ class TaskViewModel @Inject constructor(
 
         viewModelScope.launch {
             _state.emit(value = state.value.copy(refreshing = true))
-
             _state.emit(
                 value = when (val result = taskById.taskById(id)) {
                     is Result.Error -> {
@@ -55,7 +54,8 @@ class TaskViewModel @Inject constructor(
                     }
                     is Result.Success -> {
                         val task = checkNotNull(result.data)
-                        state.value.copy(refreshing = false, task = task)
+                        val taskState = TaskState.Loaded(task)
+                        state.value.copy(refreshing = false, taskState = taskState)
                     }
                 }
             )
@@ -68,7 +68,10 @@ class TaskViewModel @Inject constructor(
     }
 
     fun changeTaskCompletion() {
-        val task = checkNotNull(state.value.task)
+        val taskState = state.value.taskState
+        check(taskState is TaskState.Loaded)
+
+        val task = taskState.task
         if (task.completed) {
             reopenTask()
         } else {
@@ -77,20 +80,23 @@ class TaskViewModel @Inject constructor(
     }
 
     fun deleteTask() {
-        val task = checkNotNull(state.value.task)
+        val taskState = state.value.taskState
+        check(taskState is TaskState.Loaded)
+        val taskId = taskState.task.id
 
         viewModelScope.launch {
             _state.emit(value = state.value.copy(refreshing = true))
-
             _state.emit(
-                value = when (val result = deleteTask.deleteTask(task.id)) {
+                value = when (val result = deleteTask.deleteTask(taskId)) {
                     is Result.Error -> {
                         logger.error(result.error) { "Unexpected error" }
                         val message = UserMessage(result.error.kind())
                         val userMessages = state.value.userMessages + message
                         state.value.copy(refreshing = false, userMessages = userMessages)
                     }
-                    is Result.Success -> state.value.copy(refreshing = false)
+                    is Result.Success -> {
+                        state.value.copy(refreshing = false, taskState = TaskState.Deleted)
+                    }
                 }
             )
         }
@@ -104,11 +110,12 @@ class TaskViewModel @Inject constructor(
     }
 
     private fun closeTask() {
-        val task = checkNotNull(state.value.task)
+        val taskState = state.value.taskState
+        check(taskState is TaskState.Loaded)
+        val task = taskState.task
 
         viewModelScope.launch {
             _state.emit(value = state.value.copy(refreshing = true))
-
             _state.emit(
                 value = when (val result = closeTask.closeTask(task.id)) {
                     is Result.Error -> {
@@ -120,7 +127,9 @@ class TaskViewModel @Inject constructor(
                     is Result.Success -> {
                         state.value.copy(
                             refreshing = false,
-                            task = task.copy(completed = true),
+                            taskState = TaskState.Loaded(
+                                task = task.copy(completed = true),
+                            ),
                         )
                     }
                 }
@@ -129,11 +138,12 @@ class TaskViewModel @Inject constructor(
     }
 
     private fun reopenTask() {
-        val task = checkNotNull(state.value.task)
+        val taskState = state.value.taskState
+        check(taskState is TaskState.Loaded)
+        val task = taskState.task
 
         viewModelScope.launch {
             _state.emit(value = state.value.copy(refreshing = true))
-
             _state.emit(
                 value = when (val result = reopenTask.reopenTask(task.id)) {
                     is Result.Error -> {
@@ -145,7 +155,9 @@ class TaskViewModel @Inject constructor(
                     is Result.Success -> {
                         state.value.copy(
                             refreshing = false,
-                            task = task.copy(completed = false),
+                            taskState = TaskState.Loaded(
+                                task = task.copy(completed = false),
+                            ),
                         )
                     }
                 }
@@ -156,7 +168,19 @@ class TaskViewModel @Inject constructor(
 
 @Immutable
 data class TaskScreenState(
-    val task: Task? = null,
+    val taskState: TaskState = TaskState.Initial,
     val refreshing: Boolean = true,
     override val userMessages: List<UserMessage<DomainErrorKind>> = listOf(),
 ) : MessageState<DomainErrorKind>
+
+@Immutable
+sealed interface TaskState {
+    @Immutable
+    object Initial : TaskState
+
+    @Immutable
+    data class Loaded(val task: Task) : TaskState
+
+    @Immutable
+    object Deleted : TaskState
+}

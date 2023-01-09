@@ -26,8 +26,10 @@ import io.github.tuguzt.mirea.todolist.view.task.AddNewTaskScreen
 import io.github.tuguzt.mirea.todolist.view.task.TaskScreen
 import io.github.tuguzt.mirea.todolist.viewmodel.MainScreenViewModel
 import io.github.tuguzt.mirea.todolist.viewmodel.project.AddNewProjectViewModel
+import io.github.tuguzt.mirea.todolist.viewmodel.project.ProjectState
 import io.github.tuguzt.mirea.todolist.viewmodel.project.ProjectViewModel
 import io.github.tuguzt.mirea.todolist.viewmodel.task.AddNewTaskViewModel
+import io.github.tuguzt.mirea.todolist.viewmodel.task.TaskState
 import io.github.tuguzt.mirea.todolist.viewmodel.task.TaskViewModel
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterialApi::class)
@@ -77,7 +79,14 @@ fun EntryScreen(
                     val id = Id<Project>(projectId)
                     viewModel.setup(id)
                 }
+
                 val state by viewModel.state.collectAsState()
+                LaunchedEffect(state) {
+                    if (state.projectState is ProjectState.Deleted) {
+                        navController.navigateUp()
+                        mainViewModel.refresh()
+                    }
+                }
 
                 val pullRefreshState = rememberPullRefreshState(
                     refreshing = state.refreshing,
@@ -95,11 +104,7 @@ fun EntryScreen(
                         // TODO change due of the task
                     },
                     onTaskCheckboxClick = viewModel::changeTaskCompletion,
-                    onDeleteProject = {
-                        viewModel.deleteProject()
-                        mainViewModel.refresh()
-                        navController.navigateUp()
-                    },
+                    onDeleteProject = viewModel::deleteProject,
                     onNavigateUp = navController::navigateUp,
                     snackbarHostState = snackbarHostState,
                     pullRefreshState = pullRefreshState,
@@ -146,7 +151,13 @@ fun EntryScreen(
                     val id = Id<Task>(taskId)
                     viewModel.setup(id)
                 }
+
                 val state by viewModel.state.collectAsState()
+                LaunchedEffect(state) {
+                    if (state.taskState is TaskState.Deleted) {
+                        navController.navigateUp()
+                    }
+                }
 
                 val pullRefreshState = rememberPullRefreshState(
                     refreshing = state.refreshing,
@@ -155,10 +166,7 @@ fun EntryScreen(
                 TaskScreen(
                     state = state,
                     onTaskCompletion = viewModel::changeTaskCompletion,
-                    onDeleteTask = {
-                        viewModel.deleteTask()
-                        navController.navigateUp()
-                    },
+                    onDeleteTask = viewModel::deleteTask,
                     onNavigateUp = navController::navigateUp,
                     snackbarHostState = snackbarHostState,
                     pullRefreshState = pullRefreshState,
