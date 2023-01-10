@@ -25,7 +25,8 @@ import kotlinx.datetime.Instant
 public class LocalTaskDataSource(private val client: DatabaseClient) {
     @OptIn(ExperimentalCoroutinesApi::class)
     public fun getAll(project: Id<Project>): DomainResult<Flow<List<Task>>> = try {
-        val flow = client.taskBox.query {}.flow().map { entities ->
+        val query = client.taskBox.query {}
+        val flow = query.flow().map { entities ->
             entities.filter { task -> task.project.target?.uid == project.value }
                 .map(TaskEntity::toDomain)
         }

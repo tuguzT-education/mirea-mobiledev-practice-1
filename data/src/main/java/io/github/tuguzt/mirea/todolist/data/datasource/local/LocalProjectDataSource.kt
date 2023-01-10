@@ -21,9 +21,8 @@ import kotlinx.coroutines.flow.map
 public class LocalProjectDataSource(private val client: DatabaseClient) {
     @OptIn(ExperimentalCoroutinesApi::class)
     public fun getAll(): DomainResult<Flow<List<Project>>> = try {
-        val flow = client.projectBox.query {}.flow().map { entities ->
-            entities.map(ProjectEntity::toDomain)
-        }
+        val query = client.projectBox.query {}
+        val flow = query.flow().map { entities -> entities.map(ProjectEntity::toDomain) }
         success(flow)
     } catch (dbException: DbException) {
         val error = DomainError.StorageError(
